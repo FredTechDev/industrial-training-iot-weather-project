@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WeatherReading {
+  id          String   @id @default(uuid()) @map("id")
+  deviceId    String   @map("device_id")
+  temperature Decimal  @db.Decimal(5, 1)
+  humidity    Decimal  @db.Decimal(5, 1)
+  pressure    Decimal  @db.Decimal(7, 1)
+  altitude    Decimal  @default(0) @db.Decimal(7, 1)
+  light       Int      @default(0)
+  rain        Boolean  @default(false)
+  battery     Decimal  @default(100) @db.Decimal(5, 1)
+  recordedAt  DateTime @default(now()) @map("recorded_at") @db.Timestamptz()
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  aiReports AiReport[]
+
+  @@index([deviceId, recordedAt])
+  @@index([recordedAt])
+  @@map("weather_readings")
+}
+
+model AiReport {
+  id             String         @id @default(uuid()) @map("id")
+  readingId      String?        @map("reading_id")
+  reading        WeatherReading? @relation(fields: [readingId], references: [id], onDelete: SetNull)
+  summary        String
+  prediction     String
+  forecast       String?
+  recommendation String
+  confidence     Decimal        @db.Decimal(3, 2)
+  reasoning      String?
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([createdAt])
+  @@map("ai_reports")
+}
+
+model Alert {
+  id         String    @id @default(uuid()) @map("id")
+  severity   String    @default("info")
+  title      String
+  message    String
+  status     String    @default("active")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz()
+
+  @@index([status, createdAt])
+  @@index([severity, createdAt])
+  @@map("alerts")
+}
+
+model TrendSnapshot {
+  id             String   @id @default(uuid()) @map("id")
+  deviceId       String   @map("device_id")
+  period         String
+  avgTemperature Decimal? @map("avg_temperature") @db.Decimal(5, 1)
+  minTemperature Decimal? @map("min_temperature") @db.Decimal(5, 1)
+  maxTemperature Decimal? @map("max_temperature") @db.Decimal(5, 1)
+  avgHumidity    Decimal? @map("avg_humidity") @db.Decimal(5, 1)
+  minHumidity    Decimal? @map("min_humidity") @db.Decimal(5, 1)
+  maxHumidity    Decimal? @map("max_humidity") @db.Decimal(5, 1)
+  avgPressure    Decimal? @map("avg_pressure") @db.Decimal(7, 1)
+  minPressure    Decimal? @map("min_pressure") @db.Decimal(7, 1)
+  maxPressure    Decimal? @map("max_pressure") @db.Decimal(7, 1)
+  avgLight       Int?     @map("avg_light")
+  rainCount      Int?     @map("rain_count")
+  sampleCount    Int      @default(0) @map("sample_count")
+  calculatedAt   DateTime @default(now()) @map("calculated_at") @db.Timestamptz()
+
+  @@index([deviceId, period, calculatedAt])
+  @@map("trend_snapshots")
+}
+
+model Device {
+  id              String    @id @default(uuid()) @map("id")
+  deviceId        String    @unique @map("device_id")
+  name            String?
+  location        String?
+  firmwareVersion String?   @map("firmware_version")
+  lastSeen        DateTime? @map("last_seen") @db.Timestamptz()
+  status          String    @default("offline")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([status])
+  @@map("devices")
+}

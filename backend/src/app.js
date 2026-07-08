@@ -17,10 +17,11 @@ const reportRoutes = require("./routes/reports");
 const deviceRoutes = require("./routes/devices");
 const statusRoutes = require("./routes/status");
 
+const path = require("path");
 const app = express();
 const server = http.createServer(app);
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 app.use(morgan("short"));
@@ -35,7 +36,13 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/devices", deviceRoutes);
 app.use("/api/status", statusRoutes);
 
-app.use(notFound);
+const frontendDist = path.join(__dirname, "../../frontend/dist");
+app.use(express.static(frontendDist));
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/api")) return notFound(req, res);
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
+
 app.use(errorHandler);
 
 socketService.initialize(server);

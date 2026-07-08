@@ -1,0 +1,12 @@
+{
+  "name": "mmust-industrial-iot",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm ci && npm run build",
+    "start": "cd backend && npm ci && npm run prisma:generate && node src/app.js",
+    "postinstall": "cd backend && npm ci"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

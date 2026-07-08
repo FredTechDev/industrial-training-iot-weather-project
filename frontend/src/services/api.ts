@@ -46,3 +46,7 @@ export const deviceApi = {
 export const statusApi = {
   get: () => api.get<SystemStatus>("/api/status").then((r) => r.data),
 };
+
+export const dashboardApi = {
+  get: () => api.get<import("../types").DashboardData>("/api/dashboard").then((r) => r.data),
+};

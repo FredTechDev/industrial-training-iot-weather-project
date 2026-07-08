@@ -16,6 +16,7 @@ const alertRoutes = require("./routes/alerts");
 const reportRoutes = require("./routes/reports");
 const deviceRoutes = require("./routes/devices");
 const statusRoutes = require("./routes/status");
+const dashboardRoutes = require("./routes/dashboard");
 
 const path = require("path");
 const app = express();
@@ -35,6 +36,7 @@ app.use("/api/alerts", alertRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/devices", deviceRoutes);
 app.use("/api/status", statusRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 const frontendDist = path.join(__dirname, "../../frontend/dist");
 app.use(express.static(frontendDist));

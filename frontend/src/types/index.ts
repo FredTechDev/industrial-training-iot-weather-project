@@ -105,6 +105,17 @@ export interface SystemStatus {
   timestamp: string;
 }
 
+export interface DashboardData {
+  uptime: number;
+  totalReadings: number;
+  latestReading: WeatherReading | null;
+  devices: Device[];
+  activeAlerts: Alert[];
+  latestReport: AiReport | null;
+  websocketClients: number;
+  timestamp: string;
+}
+
 export interface ChartDataPoint {
   recordedAt: string;
   temperature: number;

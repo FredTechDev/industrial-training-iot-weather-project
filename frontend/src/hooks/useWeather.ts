@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { weatherApi, alertApi, reportApi, deviceApi, statusApi } from "../services/api";
+import { weatherApi, alertApi, reportApi, deviceApi, statusApi, dashboardApi } from "../services/api";
 
 export function useLatestReading(deviceId?: string) {
   return useQuery({
@@ -61,6 +61,14 @@ export function useSystemStatus() {
   return useQuery({
     queryKey: ["status"],
     queryFn: () => statusApi.get(),
+    refetchInterval: 15000,
+  });
+}
+
+export function useDashboard() {
+  return useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => dashboardApi.get(),
     refetchInterval: 15000,
   });
 }

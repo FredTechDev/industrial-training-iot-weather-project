@@ -1,7 +1,24 @@
 const prisma = require("../utils/prisma");
 const logger = require("../utils/logger");
 
+class SimpleCache {
+  constructor(ttlMs = 5000) {
+    this.store = new Map();
+    this.ttlMs = ttlMs;
+  }
+  get(key) {
+    const entry = this.store.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.ts > this.ttlMs) { this.store.delete(key); return null; }
+    return entry.value;
+  }
+  set(key, value) { this.store.set(key, { value, ts: Date.now() }); }
+}
+
 class WeatherService {
+  constructor() {
+    this.cache = new SimpleCache(7000);
+  }
   async saveReading(reading) {
     try {
       const saved = await prisma.weatherReading.create({
@@ -25,10 +42,15 @@ class WeatherService {
   }
 
   async getLatest(deviceId = "station-001") {
-    return prisma.weatherReading.findFirst({
+    const key = `latest:${deviceId}`;
+    const cached = this.cache.get(key);
+    if (cached) return cached;
+    const result = await prisma.weatherReading.findFirst({
       where: { deviceId },
       orderBy: { recordedAt: "desc" },
     });
+    this.cache.set(key, result);
+    return result;
   }
 
   async getHistory(deviceId = "station-001", limit = 100, offset = 0) {
@@ -283,11 +305,19 @@ class WeatherService {
   }
 
   async getAllDevices() {
-    return prisma.device.findMany({ orderBy: { updatedAt: "desc" } });
+    const cached = this.cache.get("devices");
+    if (cached) return cached;
+    const result = await prisma.device.findMany({ orderBy: { updatedAt: "desc" } });
+    this.cache.set("devices", result);
+    return result;
   }
 
   async getReadingCount() {
-    return prisma.weatherReading.count();
+    const cached = this.cache.get("readingCount");
+    if (cached) return cached;
+    const result = await prisma.weatherReading.count();
+    this.cache.set("readingCount", result);
+    return result;
   }
 
   async getSystemStatus() {

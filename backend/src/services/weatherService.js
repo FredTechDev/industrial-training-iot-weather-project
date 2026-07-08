@@ -13,6 +13,8 @@ class SimpleCache {
     return entry.value;
   }
   set(key, value) { this.store.set(key, { value, ts: Date.now() }); }
+  invalidate(key) { this.store.delete(key); }
+  invalidateAll() { this.store.clear(); }
 }
 
 class WeatherService {
@@ -34,6 +36,7 @@ class WeatherService {
           recordedAt: reading.recordedAt,
         },
       });
+      this.cache.invalidateAll();
       return saved;
     } catch (err) {
       logger.error("Failed to save reading", { error: err.message });

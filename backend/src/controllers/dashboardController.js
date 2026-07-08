@@ -2,8 +2,16 @@ const weatherService = require("../services/weatherService");
 const socketService = require("../services/socketService");
 const prisma = require("../utils/prisma");
 
+let cache = null;
+let cacheTs = 0;
+const CACHE_TTL = 10000;
+
 exports.getDashboard = async (req, res) => {
   try {
+    if (cache && Date.now() - cacheTs < CACHE_TTL) {
+      return res.json(cache);
+    }
+
     const [latest, totalReadingsRes, devices, alerts, reports] = await Promise.all([
       weatherService.getLatest(),
       prisma.weatherReading.count().catch(() => 0),
@@ -18,7 +26,7 @@ exports.getDashboard = async (req, res) => {
       }).catch(() => null),
     ]);
 
-    res.json({
+    cache = {
       uptime: process.uptime(),
       totalReadings: totalReadingsRes,
       latestReading: latest,
@@ -27,7 +35,10 @@ exports.getDashboard = async (req, res) => {
       latestReport: reports,
       websocketClients: socketService.getConnectedCount(),
       timestamp: new Date().toISOString(),
-    });
+    };
+    cacheTs = Date.now();
+
+    res.json(cache);
   } catch (err) {
     res.json({
       uptime: process.uptime(),

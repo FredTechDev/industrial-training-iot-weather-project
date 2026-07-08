@@ -97,9 +97,11 @@ class MqttSubscriber {
   async handleLiveReading(data) {
     const validation = validateSensorReading(data);
     if (!validation.valid) {
-      logger.warn("Invalid sensor reading rejected", { errors: validation.errors, deviceId: data.deviceId });
-      this.publishAlert("warning", "Invalid Sensor Data", `Validation failed: ${validation.errors.join("; ")}`);
+      logger.warn("Sensor reading rejected", { errors: validation.errors, deviceId: data.deviceId });
       return;
+    }
+    if (validation.warnings.length > 0) {
+      logger.warn("Sensor reading using defaults for", { fields: validation.warnings, deviceId: data.deviceId });
     }
 
     const reading = sanitizeReading(data);

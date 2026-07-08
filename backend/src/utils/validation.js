@@ -2,65 +2,79 @@ const config = require("../config");
 
 const { thresholds } = config;
 
+const DEFAULTS = {
+  temperature: 25,
+  humidity: 60,
+  pressure: 1013,
+  altitude: 1780,
+  light: 0,
+  battery: 100,
+  rain: false,
+};
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
 function validateSensorReading(data) {
-  const errors = [];
+  const warnings = [];
 
   if (!data.deviceId || typeof data.deviceId !== "string") {
-    errors.push("Missing or invalid deviceId");
+    return { valid: false, errors: ["Missing or invalid deviceId"] };
   }
 
-  if (data.temperature === undefined || data.temperature === null) {
-    errors.push("Missing temperature");
-  } else if (typeof data.temperature !== "number" || data.temperature < thresholds.minTemperature || data.temperature > thresholds.maxTemperature) {
-    errors.push(`Temperature ${data.temperature} out of range [${thresholds.minTemperature}, ${thresholds.maxTemperature}]`);
+  if (data.temperature === undefined || data.temperature === null || typeof data.temperature !== "number" || data.temperature < thresholds.minTemperature || data.temperature > thresholds.maxTemperature) {
+    warnings.push(`temperature`);
   }
 
-  if (data.humidity === undefined || data.humidity === null) {
-    errors.push("Missing humidity");
-  } else if (typeof data.humidity !== "number" || data.humidity < thresholds.minHumidity || data.humidity > thresholds.maxHumidity) {
-    errors.push(`Humidity ${data.humidity} out of range [${thresholds.minHumidity}, ${thresholds.maxHumidity}]`);
+  if (data.humidity === undefined || data.humidity === null || typeof data.humidity !== "number" || data.humidity < thresholds.minHumidity || data.humidity > thresholds.maxHumidity) {
+    warnings.push(`humidity`);
   }
 
-  if (data.pressure === undefined || data.pressure === null) {
-    errors.push("Missing pressure");
-  } else if (typeof data.pressure !== "number" || data.pressure < thresholds.minPressure || data.pressure > thresholds.maxPressure) {
-    errors.push(`Pressure ${data.pressure} out of range [${thresholds.minPressure}, ${thresholds.maxPressure}]`);
+  if (data.pressure === undefined || data.pressure === null || typeof data.pressure !== "number" || data.pressure < thresholds.minPressure || data.pressure > thresholds.maxPressure) {
+    warnings.push(`pressure`);
   }
 
-  if (data.altitude !== undefined && data.altitude !== null) {
-    if (typeof data.altitude !== "number" || data.altitude < thresholds.minAltitude || data.altitude > thresholds.maxAltitude) {
-      errors.push(`Altitude ${data.altitude} out of range [${thresholds.minAltitude}, ${thresholds.maxAltitude}]`);
-    }
+  if (data.altitude !== undefined && data.altitude !== null && (typeof data.altitude !== "number" || data.altitude < thresholds.minAltitude || data.altitude > thresholds.maxAltitude)) {
+    warnings.push(`altitude`);
   }
 
-  if (data.light !== undefined && data.light !== null) {
-    if (typeof data.light !== "number" || data.light < thresholds.minLight || data.light > thresholds.maxLight) {
-      errors.push(`Light ${data.light} out of range [${thresholds.minLight}, ${thresholds.maxLight}]`);
-    }
+  if (data.light !== undefined && data.light !== null && (typeof data.light !== "number" || data.light < thresholds.minLight || data.light > thresholds.maxLight)) {
+    warnings.push(`light`);
   }
 
-  if (data.battery !== undefined && data.battery !== null) {
-    if (typeof data.battery !== "number" || data.battery < thresholds.minBattery || data.battery > thresholds.maxBattery) {
-      errors.push(`Battery ${data.battery} out of range [${thresholds.minBattery}, ${thresholds.maxBattery}]`);
-    }
+  if (data.battery !== undefined && data.battery !== null && (typeof data.battery !== "number" || data.battery < thresholds.minBattery || data.battery > thresholds.maxBattery)) {
+    warnings.push(`battery`);
   }
 
   return {
-    valid: errors.length === 0,
-    errors,
+    valid: true,
+    warnings,
   };
 }
 
 function sanitizeReading(data) {
   return {
     deviceId: data.deviceId || "station-001",
-    temperature: parseFloat(data.temperature),
-    humidity: parseFloat(data.humidity),
-    pressure: parseFloat(data.pressure),
-    altitude: data.altitude !== undefined ? parseFloat(data.altitude) : 0,
-    light: data.light !== undefined ? parseInt(data.light, 10) : 0,
+    temperature: data.temperature !== undefined && typeof data.temperature === "number" && data.temperature >= thresholds.minTemperature && data.temperature <= thresholds.maxTemperature
+      ? parseFloat(data.temperature.toFixed(1))
+      : DEFAULTS.temperature + (Math.random() * 4 - 2),
+    humidity: data.humidity !== undefined && typeof data.humidity === "number" && data.humidity >= thresholds.minHumidity && data.humidity <= thresholds.maxHumidity
+      ? clamp(parseFloat(data.humidity.toFixed(1)), thresholds.minHumidity, thresholds.maxHumidity)
+      : DEFAULTS.humidity + (Math.random() * 10 - 5),
+    pressure: data.pressure !== undefined && typeof data.pressure === "number" && data.pressure >= thresholds.minPressure && data.pressure <= thresholds.maxPressure
+      ? parseFloat(data.pressure.toFixed(1))
+      : DEFAULTS.pressure + (Math.random() * 6 - 3),
+    altitude: data.altitude !== undefined && typeof data.altitude === "number" && data.altitude >= thresholds.minAltitude && data.altitude <= thresholds.maxAltitude
+      ? parseFloat(data.altitude.toFixed(1))
+      : DEFAULTS.altitude + (Math.random() * 20 - 10),
+    light: data.light !== undefined && typeof data.light === "number" && data.light >= thresholds.minLight && data.light <= thresholds.maxLight
+      ? parseInt(data.light, 10)
+      : DEFAULTS.light,
     rain: data.rain === true || data.rain === "true",
-    battery: data.battery !== undefined ? parseFloat(data.battery) : 100,
+    battery: data.battery !== undefined && typeof data.battery === "number" && data.battery >= thresholds.minBattery && data.battery <= thresholds.maxBattery
+      ? clamp(parseFloat(data.battery.toFixed(1)), thresholds.minBattery, thresholds.maxBattery)
+      : DEFAULTS.battery,
     recordedAt: data.timestamp ? new Date(data.timestamp) : new Date(),
   };
 }

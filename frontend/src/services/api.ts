@@ -3,7 +3,7 @@ import type { WeatherReading, AiReport, Alert, Device, TrendData, SystemStatus }
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "",
-  timeout: 10000,
+  timeout: 30000,
 });
 
 export const weatherApi = {

@@ -286,6 +286,10 @@ class WeatherService {
     return prisma.device.findMany({ orderBy: { updatedAt: "desc" } });
   }
 
+  async getReadingCount() {
+    return prisma.weatherReading.count();
+  }
+
   async getSystemStatus() {
     const latestReading = await this.getLatest();
     const lastHourCount = await prisma.weatherReading.count({

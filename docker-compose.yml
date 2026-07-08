@@ -1,34 +1,14 @@
 services:
-  mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: iot-mosquitto
-    restart: unless-stopped
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./docker/mosquitto/config:/mosquitto/config:ro
-      - mosquitto_data:/mosquitto/data
-      - mosquitto_log:/mosquitto/log
-    networks:
-      - iot-network
-    healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/broker/version", "--retained-only", "-C", "1", "-W", "3"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: iot-backend
     restart: unless-stopped
+    ports:
+      - "3001:3001"
     env_file:
       - .env
-    depends_on:
-      mosquitto:
-        condition: service_healthy
     networks:
       - iot-network
 
@@ -50,27 +30,6 @@ services:
     networks:
       - iot-network
 
-  weather-simulator:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: iot-simulator
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - SIMULATOR_MODE=true
-    depends_on:
-      mosquitto:
-        condition: service_healthy
-    networks:
-      - iot-network
-    command: ["node", "src/simulator.js"]
-
 networks:
   iot-network:
     driver: bridge
-
-volumes:
-  mosquitto_data:
-  mosquitto_log:

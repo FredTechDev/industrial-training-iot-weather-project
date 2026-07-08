@@ -1,265 +1,131 @@
-/*
- * ──────────────────────────────────────────────
- * IoT Weather Station - ESP32 Firmware
- * MMUST Industrial IoT Capstone Project
- * 
- * Hardware:
- *   - ESP32 NodeMCU
- *   - DHT22 (Temperature & Humidity)
- *   - BMP280 (Pressure & Altitude)
- *   - YL-83 (Rain Detection)
- *   - LDR (Ambient Light)
- * 
- * Communication:
- *   - MQTT over WiFi
- *   - Publishes to: weather/live
- * 
- * Interval:
- *   - Reads sensors every 30 seconds
- * ──────────────────────────────────────────────
- */
-
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
-#include <DHT.h>
-#include <Adafruit_BMP280.h>
 #include <ArduinoJson.h>
 
-// ─── WiFi Configuration ───────────────────────
-const char* WIFI_SSID = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+// --- WiFi ---
+const char* WIFI_SSID = "your_wifi_ssid";
+const char* WIFI_PASS = "your_wifi_password";
 
-// ─── MQTT Configuration ───────────────────────
-const char* MQTT_BROKER = "YOUR_SERVER_IP";
-const int   MQTT_PORT = 1883;
-const char* MQTT_CLIENT_ID = "esp32-weather-station";
-const char* MQTT_TOPIC_LIVE = "weather/live";
-const char* MQTT_TOPIC_STATUS = "weather/status";
-const char* MQTT_TOPIC_LOGS = "weather/device/logs";
+// --- MQTT ---
+// Local Mosquitto (no TLS, no auth):
+//   HOST = "192.168.1.100",  PORT = 1883,  TLS = false
+// HiveMQ Cloud (TLS + auth):
+//   HOST = "<cluster-id>.s1.eu.hivemq.cloud",  PORT = 8883,  TLS = true
+const char* MQTT_HOST = "6f83a2bd234445aca1060e89e6171e19.s1.eu.hivemq.cloud";
+const int  MQTT_PORT = 8883;
+const bool MQTT_TLS  = true;
+const char* MQTT_USER = "mmust-iot-001";
+const char* MQTT_PASS = "Fred1234";
+
 const char* DEVICE_ID = "station-001";
+const char* TOPIC_LIVE = "weather/live";
+const char* TOPIC_STATUS = "weather/status";
 
-// ─── Pin Definitions ──────────────────────────
-#define DHT_PIN      4
-#define DHT_TYPE     DHT22
-#define BMP_CS       5
-#define LDR_PIN      34
-#define RAIN_PIN     35
-#define BATTERY_PIN  32
+// --- Sensor pins ---
+#define DHT22_PIN 4
+#define BMP280_ADDR 0x76
+#define LIGHT_SENSOR_PIN 34
+#define RAIN_SENSOR_PIN 35
+#define BATTERY_PIN 32
 
-// ─── Sensor Objects ───────────────────────────
-DHT dht(DHT_PIN, DHT_TYPE);
-Adafruit_BMP280 bmp;
-
-// ─── MQTT Client ──────────────────────────────
 WiFiClient wifiClient;
-PubSubClient mqttClient(wifiClient);
+WiFiClientSecure tlsClient;
+PubSubClient mqtt(MQTT_TLS ? tlsClient : wifiClient);
 
-// ─── Timing ───────────────────────────────────
-const unsigned long READ_INTERVAL = 30000;
-unsigned long lastReadTime = 0;
-unsigned long lastReconnectAttempt = 0;
-const unsigned long RECONNECT_INTERVAL = 5000;
+unsigned long lastPublish = 0;
+const long PUBLISH_INTERVAL = 30000;
 
-// ─── Calibration ──────────────────────────────
-const float VOLTAGE_DIVIDER_RATIO = 2.0;
-const float ADC_MAX_VOLTAGE = 3.3;
-const int ADC_RESOLUTION = 4095;
-
-// ─── Forward Declarations ─────────────────────
 void connectWiFi();
 void connectMQTT();
-void publishReading();
-void publishLog(const char* message);
-String getFormattedTimestamp();
+void publishReading(float temp, float hum, float press, float alt, int light, bool rain, float bat);
+void publishStatus(const char* state);
 
 void setup() {
   Serial.begin(115200);
-  Serial.println(F("\n═══════════════════════════════════"));
-  Serial.println(F("  IoT Weather Station - ESP32"));
-  Serial.println(F("  MMUST Industrial IoT Project"));
-  Serial.println(F("═══════════════════════════════════\n"));
 
-  // Initialize sensors
-  dht.begin();
-  Serial.println(F("[OK] DHT22 initialized"));
+  if (MQTT_TLS) tlsClient.setInsecure();  // skip certificate fingerprint check
 
-  if (!bmp.begin(0x76)) {
-    Serial.println(F("[WARN] BMP280 not found at 0x76, trying 0x77"));
-    if (!bmp.begin(0x77)) {
-      Serial.println(F("[ERROR] BMP280 initialization failed!"));
-    }
-  } else {
-    Serial.println(F("[OK] BMP280 initialized"));
-    bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
-                    Adafruit_BMP280::SAMPLING_X2,
-                    Adafruit_BMP280::SAMPLING_X16,
-                    Adafruit_BMP280::FILTER_X16,
-                    Adafruit_BMP280::STANDBY_MS_500);
-  }
-
-  // Configure ADC
-  analogReadResolution(12);
-  pinMode(LDR_PIN, INPUT);
-  pinMode(RAIN_PIN, INPUT);
+  pinMode(LIGHT_SENSOR_PIN, INPUT);
+  pinMode(RAIN_SENSOR_PIN, INPUT);
   pinMode(BATTERY_PIN, INPUT);
 
-  Serial.println(F("[OK] ADC pins configured"));
-
-  // Connect to WiFi
   connectWiFi();
-
-  // Configure MQTT
-  mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
-
-  publishLog("System initialized");
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
 }
 
 void loop() {
-  if (!mqttClient.connected()) {
-    unsigned long now = millis();
-    if (now - lastReconnectAttempt > RECONNECT_INTERVAL) {
-      lastReconnectAttempt = now;
-      connectMQTT();
-    }
-  } else {
-    mqttClient.loop();
-  }
+  if (!mqtt.connected()) connectMQTT();
+  mqtt.loop();
 
-  unsigned long now = millis();
-  if (now - lastReadTime >= READ_INTERVAL) {
-    lastReadTime = now;
-    publishReading();
+  if (millis() - lastPublish >= PUBLISH_INTERVAL) {
+    lastPublish = millis();
+
+    // --- Read sensors (replace with actual sensor libraries) ---
+    float temp = 25.0 + random(-50, 50) / 10.0;
+    float hum  = 60.0 + random(-100, 100) / 10.0;
+    float press = 1008.0 + random(-20, 20) / 10.0;
+    float alt  = 1780.0;
+    int light   = analogRead(LIGHT_SENSOR_PIN);
+    bool rain   = digitalRead(RAIN_SENSOR_PIN) == LOW;
+    float bat   = analogRead(BATTERY_PIN) / 4095.0 * 3.3 * 2;
+
+    publishReading(temp, hum, press, alt, light, rain, bat);
   }
+}
+
+void publishReading(float temp, float hum, float press, float alt, int light, bool rain, float bat) {
+  StaticJsonDocument<256> doc;
+  doc["deviceId"] = DEVICE_ID;
+  doc["temperature"] = temp;
+  doc["humidity"] = hum;
+  doc["pressure"] = press;
+  doc["altitude"] = alt;
+  doc["light"] = light;
+  doc["rain"] = rain;
+  doc["battery"] = bat;
+  doc["timestamp"] = "";
+
+  char buffer[256];
+  size_t n = serializeJson(doc, buffer);
+  mqtt.publish(TOPIC_LIVE, buffer, n);
+  Serial.print("Published: ");
+  Serial.println(buffer);
+}
+
+void publishStatus(const char* state) {
+  StaticJsonDocument<128> doc;
+  doc["deviceId"] = DEVICE_ID;
+  doc["status"] = state;
+  char buffer[128];
+  serializeJson(doc, buffer);
+  mqtt.publish(TOPIC_STATUS, buffer, false);
 }
 
 void connectWiFi() {
-  Serial.print(F("Connecting to WiFi"));
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
+  Serial.print("Connecting to WiFi");
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    attempts++;
   }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println();
-    Serial.print(F("[OK] WiFi connected. IP: "));
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println();
-    Serial.println(F("[ERROR] WiFi connection failed!"));
-  }
+  Serial.println("\nWiFi connected, IP: " + WiFi.localIP().toString());
 }
 
 void connectMQTT() {
-  if (WiFi.status() != WL_CONNECTED) {
-    connectWiFi();
+  while (!mqtt.connected()) {
+    Serial.print("Connecting to MQTT...");
+    boolean ok = (strlen(MQTT_USER) > 0)
+      ? mqtt.connect(DEVICE_ID, MQTT_USER, MQTT_PASS)
+      : mqtt.connect(DEVICE_ID);
+    if (ok) {
+      Serial.println("connected");
+      publishStatus("online");
+    } else {
+      Serial.print("failed (rc=");
+      Serial.print(mqtt.state());
+      Serial.println(") retrying in 5s");
+      delay(5000);
+    }
   }
-
-  Serial.print(F("Connecting to MQTT broker..."));
-
-  if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_TOPIC_STATUS, 1, true, "{\"status\":\"offline\",\"deviceId\":\"station-001\"}")) {
-    Serial.println(F(" connected"));
-
-    // Publish status
-    String statusPayload = "{\"status\":\"online\",\"deviceId\":\"station-001\",\"timestamp\":\"";
-    statusPayload += getFormattedTimestamp();
-    statusPayload += "\"}";
-    mqttClient.publish(MQTT_TOPIC_STATUS, statusPayload.c_str(), true);
-  } else {
-    Serial.print(F(" failed, rc="));
-    Serial.println(mqttClient.state());
-  }
-}
-
-void publishReading() {
-  // Read DHT22
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println(F("[ERROR] Failed to read DHT22"));
-    publishLog("DHT22 read error");
-    return;
-  }
-
-  // Read BMP280
-  float pressure = 0;
-  float altitude = 0;
-
-  if (bmp.begin()) {
-    pressure = bmp.readPressure() / 100.0F;
-    altitude = bmp.readAltitude(1013.25);
-  } else {
-    Serial.println(F("[WARN] BMP280 not available"));
-    pressure = 1013.25;
-    altitude = 0;
-  }
-
-  // Read LDR (Light)
-  int ldrRaw = analogRead(LDR_PIN);
-  float ldrVoltage = (ldrRaw / (float)ADC_RESOLUTION) * ADC_MAX_VOLTAGE;
-  int lightLux = (int)(ldrVoltage * 1000);
-
-  // Read Rain Sensor
-  int rainRaw = analogRead(RAIN_PIN);
-  bool rainDetected = rainRaw < 2000;
-
-  // Read Battery Voltage
-  int battRaw = analogRead(BATTERY_PIN);
-  float battVoltage = (battRaw / (float)ADC_RESOLUTION) * ADC_MAX_VOLTAGE * VOLTAGE_DIVIDER_RATIO;
-  float batteryPercent = constrain(map(battVoltage * 100, 300, 420, 0, 10000) / 100.0, 0.0, 100.0);
-
-  // Print to Serial
-  Serial.println(F("──────────────────────────────"));
-  Serial.printf("Temp:      %.1f °C\n", temperature);
-  Serial.printf("Humidity:  %.1f %%\n", humidity);
-  Serial.printf("Pressure:  %.1f hPa\n", pressure);
-  Serial.printf("Altitude:  %.1f m\n", altitude);
-  Serial.printf("Light:     %d lux\n", lightLux);
-  Serial.printf("Rain:      %s\n", rainDetected ? "YES" : "NO");
-  Serial.printf("Battery:   %.1f %%\n", batteryPercent);
-
-  // Build JSON payload
-  StaticJsonDocument<512> doc;
-  doc["deviceId"] = DEVICE_ID;
-  doc["temperature"] = round(temperature * 10) / 10.0;
-  doc["humidity"] = round(humidity * 10) / 10.0;
-  doc["pressure"] = round(pressure * 10) / 10.0;
-  doc["altitude"] = round(altitude * 10) / 10.0;
-  doc["light"] = lightLux;
-  doc["rain"] = rainDetected;
-  doc["battery"] = round(batteryPercent * 10) / 10.0;
-  doc["timestamp"] = getFormattedTimestamp();
-
-  char buffer[512];
-  size_t n = serializeJson(doc, buffer);
-
-  if (mqttClient.publish(MQTT_TOPIC_LIVE, buffer, false)) {
-    Serial.println(F("[OK] Published to weather/live"));
-  } else {
-    Serial.println(F("[ERROR] Failed to publish MQTT message"));
-  }
-  Serial.println(F("──────────────────────────────\n"));
-}
-
-void publishLog(const char* message) {
-  if (!mqttClient.connected()) return;
-
-  StaticJsonDocument<256> doc;
-  doc["deviceId"] = DEVICE_ID;
-  doc["message"] = message;
-  doc["timestamp"] = getFormattedTimestamp();
-
-  char buffer[256];
-  serializeJson(doc, buffer);
-  mqttClient.publish(MQTT_TOPIC_LOGS, buffer);
-}
-
-String getFormattedTimestamp() {
-  // Note: For production, use NTP time sync
-  // This returns a placeholder ISO timestamp
-  return "2026-01-01T00:00:00.000Z";
 }

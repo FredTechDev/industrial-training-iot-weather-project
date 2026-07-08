@@ -19,6 +19,9 @@ class MqttSubscriber {
       clean: true,
       reconnectPeriod: 5000,
       connectTimeout: 10000,
+      rejectUnauthorized: false,
+      username: config.mqtt.username || undefined,
+      password: config.mqtt.password || undefined,
       will: {
         topic: config.mqtt.topics.status,
         payload: JSON.stringify({ status: "offline", deviceId: "backend", timestamp: new Date().toISOString() }),

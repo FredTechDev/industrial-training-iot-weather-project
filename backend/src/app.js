@@ -50,11 +50,6 @@ async function start() {
 
   mqttSubscriber.connect();
 
-  if (config.simulator.enabled) {
-    logger.info("Simulator mode enabled - starting weather simulator");
-    require("./simulator");
-  }
-
   server.listen(config.port, () => {
     logger.info(`Backend server running on port ${config.port}`);
     logger.info(`Environment: ${config.env}`);

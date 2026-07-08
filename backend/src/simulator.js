@@ -86,7 +86,6 @@ class WeatherSimulator {
   }
 }
 
-const simulator = new WeatherSimulator();
-simulator.start();
-
-module.exports = simulator;
+// NOTE: Simulator is NOT auto-started in production.
+// To use for testing: const simulator = new WeatherSimulator(); simulator.start();
+module.exports = WeatherSimulator;

@@ -20,8 +20,8 @@ class AiService {
   async generateReport(reading, trends) {
     try {
       if (!config.gemini.apiKey || config.gemini.apiKey === "your_gemini_api_key_here") {
-        logger.warn("Gemini API key not configured. Using mock report.");
-        return this.generateMockReport(reading, trends);
+        logger.warn("Gemini API key not configured. Skipping AI report.");
+        return null;
       }
 
       const prompt = this.buildPrompt(reading, trends);
@@ -33,7 +33,7 @@ class AiService {
       return report;
     } catch (err) {
       logger.error("Failed to generate AI report", { error: err.message });
-      return this.generateMockReport(reading, trends);
+      return null;
     }
   }
 
@@ -136,55 +136,8 @@ Respond with ONLY valid JSON in this exact structure:
       };
     } catch (err) {
       logger.error("Failed to parse Gemini response", { error: err.message });
-      return this.generateMockReport(reading, null);
+      throw new Error("Failed to parse Gemini response");
     }
-  }
-
-  generateMockReport(reading, trends) {
-    const temp = Number(reading.temperature);
-    const humidity = Number(reading.humidity);
-    const pressure = Number(reading.pressure);
-    const rain = reading.rain;
-
-    let summary = `Current conditions: ${temp}°C, ${humidity}% humidity, ${pressure} hPa pressure.`;
-    if (rain) summary += " Rain is currently detected.";
-    if (temp > 35) summary += " It is very hot.";
-    else if (temp < 10) summary += " It is cold.";
-    else summary += " Moderate weather conditions.";
-
-    let rainProbability = rain ? 75 : 10;
-    if (humidity > 80 && pressure < 1000) rainProbability = 65;
-    else if (humidity > 70 && pressure < 995) rainProbability = 80;
-
-    let forecast = "Expect current conditions to persist over the next 30-60 minutes.";
-    if (trends?.pressure?.direction === "falling") {
-      forecast = "Pressure dropping. Possible weather deterioration within the hour.";
-    } else if (trends?.pressure?.direction === "rising") {
-      forecast = "Pressure rising. Conditions expected to stabilize or improve.";
-    }
-
-    const risks = [];
-    if (temp > 40) risks.push("Heat stress risk");
-    if (temp < 0) risks.push("Frost risk");
-    if (rain && humidity > 85) risks.push("Heavy precipitation");
-    if (pressure < 990) risks.push("Storm risk");
-    if (humidity > 95) risks.push("Fog risk");
-
-    const recommendations = [];
-    if (temp > 35) recommendations.push("Stay hydrated and avoid prolonged sun exposure");
-    if (rain) recommendations.push("Carry umbrella or rain gear");
-    if (pressure < 990) recommendations.push("Secure outdoor objects; storm可能 approaching");
-    if (risks.length === 0) recommendations.push("No special precautions needed");
-
-    return {
-      readingId: reading.id,
-      summary,
-      prediction: `Rain probability: ${rainProbability}%`,
-      forecast,
-      recommendation: recommendations.join(". ") || "Normal conditions, no special actions required.",
-      confidence: 0.65,
-      reasoning: `Analysis based on temperature (${temp}°C), humidity (${humidity}%), pressure (${pressure}hPa), and rain sensor (${rain ? "wet" : "dry"}).`,
-    };
   }
 
   async saveReport(report) {

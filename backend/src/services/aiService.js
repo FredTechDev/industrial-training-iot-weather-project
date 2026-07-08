@@ -7,13 +7,14 @@ class AiService {
   constructor() {
     this.lastReportTime = 0;
     this.minInterval = 120000;
-    this.consecutiveSimilar = 0;
-    this.lastSummary = "";
+    this.consecutiveFailures = 0;
+    this.maxRetries = 3;
   }
 
   async shouldGenerateReport(reading) {
     const now = Date.now();
-    if (now - this.lastReportTime < this.minInterval) return false;
+    const backoffMs = this.minInterval * Math.pow(2, Math.min(this.consecutiveFailures, 4));
+    if (now - this.lastReportTime < backoffMs) return false;
     return true;
   }
 
@@ -25,15 +26,47 @@ class AiService {
       }
 
       const prompt = this.buildPrompt(reading, trends);
-      const response = await this.callGemini(prompt);
+      const response = await this.callGeminiWithRetry(prompt);
       const report = this.parseResponse(response, reading);
       await this.saveReport(report);
 
       this.lastReportTime = Date.now();
+      this.consecutiveFailures = 0;
       return report;
     } catch (err) {
-      logger.error("Failed to generate AI report", { error: err.message });
+      this.consecutiveFailures++;
+      const status = err.response?.status;
+      const details = err.response?.data?.error?.message || err.code || "";
+      logger.error("Failed to generate AI report", {
+        error: err.message,
+        statusCode: status,
+        details,
+        consecutiveFailures: this.consecutiveFailures,
+      });
       return null;
+    }
+  }
+
+  async callGeminiWithRetry(prompt, attempt = 1) {
+    try {
+      return await this.callGemini(prompt);
+    } catch (err) {
+      const status = err.response?.status;
+      const isRetryable = status === 429 || status === 500 || status === 503 || !status;
+
+      if (isRetryable && attempt <= this.maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30000);
+        logger.warn("Gemini API call failed, retrying", {
+          status,
+          attempt,
+          maxRetries: this.maxRetries,
+          retryAfterMs: Math.round(delay),
+        });
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.callGeminiWithRetry(prompt, attempt + 1);
+      }
+
+      throw err;
     }
   }
 

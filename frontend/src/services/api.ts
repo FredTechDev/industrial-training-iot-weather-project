@@ -2,7 +2,7 @@ import axios from "axios";
 import type { WeatherReading, AiReport, Alert, Device, TrendData, SystemStatus } from "../types";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "",
+  baseURL: "",
   timeout: 30000,
 });
 

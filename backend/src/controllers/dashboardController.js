@@ -13,7 +13,7 @@ exports.getDashboard = async (req, res) => {
         orderBy: { createdAt: "desc" },
         where: { status: "active" },
       }).catch(() => []),
-      prisma.aIReport.findFirst({
+      prisma.aiReport.findFirst({
         orderBy: { createdAt: "desc" },
       }).catch(() => null),
     ]);

@@ -7,11 +7,6 @@
 const char* WIFI_SSID = "your_wifi_ssid";
 const char* WIFI_PASS = "your_wifi_password";
 
-// --- MQTT ---
-// Local Mosquitto (no TLS, no auth):
-//   HOST = "192.168.1.100",  PORT = 1883,  TLS = false
-// HiveMQ Cloud (TLS + auth):
-//   HOST = "<cluster-id>.s1.eu.hivemq.cloud",  PORT = 8883,  TLS = true
 const char* MQTT_HOST = "6f83a2bd234445aca1060e89e6171e19.s1.eu.hivemq.cloud";
 const int  MQTT_PORT = 8883;
 const bool MQTT_TLS  = true;

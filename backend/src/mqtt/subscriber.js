@@ -22,12 +22,7 @@ class MqttSubscriber {
       rejectUnauthorized: false,
       username: config.mqtt.username || undefined,
       password: config.mqtt.password || undefined,
-      will: {
-        topic: config.mqtt.topics.status,
-        payload: JSON.stringify({ status: "offline", deviceId: "backend", timestamp: new Date().toISOString() }),
-        qos: 1,
-        retain: true,
-      },
+      // will not used — HiveMQ Cloud free tier restricts will messages
     };
 
     this.client = mqtt.connect(config.mqtt.brokerUrl, options);
@@ -41,7 +36,6 @@ class MqttSubscriber {
           logger.error("Failed to subscribe to topics", { error: err.message });
         } else {
           logger.info(`Subscribed to ${config.mqtt.subscribeTopic}`);
-          this.publishStatus("online");
         }
       });
     });
@@ -156,7 +150,7 @@ class MqttSubscriber {
     this.client.publish(
       config.mqtt.topics.status,
       JSON.stringify({ status, deviceId: "backend", timestamp: new Date().toISOString() }),
-      { qos: 1, retain: true }
+      { qos: 1 }
     );
   }
 

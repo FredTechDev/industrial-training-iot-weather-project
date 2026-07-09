@@ -1,56 +1,44 @@
-import { useState, useEffect } from "react";
-import { socketService } from "../../services/socket";
+import { useAppStore } from "../../stores/useAppStore";
+import { Menu, Bell, Radio } from "lucide-react";
+import StatusBadge from "../common/StatusBadge";
+import { formatTime } from "../../utils/format";
 
 export default function Header() {
-  const [connected, setConnected] = useState(false);
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    socketService.connect();
-
-    const handleConnect = () => setConnected(true);
-    const handleDisconnect = () => setConnected(false);
-
-    socketService.on("connect", handleConnect);
-    socketService.on("disconnect", handleDisconnect);
-
-    const timer = setInterval(() => setTime(new Date()), 1000);
-
-    return () => {
-      socketService.off("connect", handleConnect);
-      socketService.off("disconnect", handleDisconnect);
-      clearInterval(timer);
-    };
-  }, []);
+  const { telemetry, connection, toggleSidebar } = useAppStore();
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700 px-6 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-2xl">🌤</div>
-          <div>
-            <h1 className="text-lg font-bold text-white">IoT Weather Station</h1>
-            <p className="text-xs text-gray-400">AI-Driven Telemetry System</p>
-          </div>
+    <header className="h-14 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 px-4 flex items-center justify-between sticky top-0 z-30">
+      <div className="flex items-center gap-3">
+        <button onClick={toggleSidebar} className="lg:hidden text-gray-400 hover:text-white">
+          <Menu size={20} />
+        </button>
+        <div className="hidden sm:flex items-center gap-2">
+          <Radio size={14} className={connection === "connected" ? "text-emerald-400" : "text-red-400"} />
+          <span className="text-xs text-gray-400">
+            {connection === "connected" ? "Live" : "Offline"}
+          </span>
         </div>
+      </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="text-sm text-gray-400">
-              {connected ? "Live" : "Disconnected"}
-            </span>
-          </div>
+      <div className="flex items-center gap-3">
+        {telemetry && (
+          <>
+            <StatusBadge status={telemetry.window} pulse />
+            <StatusBadge status={telemetry.mode} />
+            <StatusBadge status={telemetry.prediction} />
+          </>
+        )}
+      </div>
 
-          <div className="text-sm text-gray-400">
-            {time.toLocaleTimeString()}
-          </div>
-
-          <div className="text-xs text-gray-500">
-            {time.toLocaleDateString()}
-          </div>
+      <div className="flex items-center gap-3">
+        {telemetry && (
+          <span className="text-xs text-gray-500 hidden sm:block">
+            {formatTime(telemetry.timestamp || new Date())}
+          </span>
+        )}
+        <div className="relative">
+          <Bell size={16} className="text-gray-400" />
+          <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
         </div>
       </div>
     </header>

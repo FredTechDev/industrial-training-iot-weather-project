@@ -5,14 +5,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    proxy: {
-      "/api": {
-        target: "http://backend:3001",
-        changeOrigin: true,
-      },
-      "/socket.io": {
-        target: "http://backend:3001",
-        ws: true,
+    host: true,
+  },
+  build: {
+    target: "es2020",
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          mqtt: ["mqtt"],
+          charts: ["recharts"],
+          motion: ["framer-motion"],
+        },
       },
     },
   },

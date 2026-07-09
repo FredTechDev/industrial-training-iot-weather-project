@@ -18,13 +18,16 @@ const config = {
     password: process.env.MQTT_PASSWORD || "",
     clientId: process.env.MQTT_CLIENT_ID || "weather-backend",
     topics: {
-      live: "weather/live",
-      alerts: "weather/alerts",
-      status: "weather/status",
-      system: "weather/system",
-      logs: "weather/device/logs",
+      telemetry: "window/telemetry",
+      control: "window/control",
+      config: "window/config",
+      status: "window/status",
+      events: "window/events",
+      system: "window/system",
+      alerts: "window/alerts",
+      presence: "home/presence",
     },
-    subscribeTopic: "weather/#",
+    subscribeTopic: "window/#",
     qos: 1,
   },
 
@@ -36,7 +39,7 @@ const config = {
 
   simulator: {
     enabled: process.env.SIMULATOR_MODE === "true",
-    interval: parseInt(process.env.SIMULATOR_INTERVAL, 10) || 30,
+    interval: parseInt(process.env.SIMULATOR_INTERVAL, 10) || 15,
     deviceId: process.env.SIMULATOR_DEVICE_ID || "station-001",
   },
 

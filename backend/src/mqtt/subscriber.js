@@ -22,7 +22,6 @@ class MqttSubscriber {
       rejectUnauthorized: false,
       username: config.mqtt.username || undefined,
       password: config.mqtt.password || undefined,
-      // will not used — HiveMQ Cloud free tier restricts will messages
     };
 
     this.client = mqtt.connect(config.mqtt.brokerUrl, options);
@@ -37,6 +36,11 @@ class MqttSubscriber {
         } else {
           logger.info(`Subscribed to ${config.mqtt.subscribeTopic}`);
         }
+      });
+
+      // Also subscribe to presence topic
+      this.client.subscribe("home/presence", { qos: config.mqtt.qos }, (err) => {
+        if (!err) logger.info("Subscribed to home/presence");
       });
     });
 
@@ -71,20 +75,26 @@ class MqttSubscriber {
         return;
       }
 
-      logger.debug(`MQTT message on ${topic}`, { deviceId: data.deviceId });
+      logger.debug(`MQTT message on ${topic}`);
 
       switch (topic) {
-        case config.mqtt.topics.live:
-          await this.handleLiveReading(data);
+        case config.mqtt.topics.telemetry:
+          await this.handleTelemetry(data);
+          break;
+        case config.mqtt.topics.control:
+          this.handleControlCommand(data);
           break;
         case config.mqtt.topics.status:
           await this.handleDeviceStatus(data);
           break;
+        case config.mqtt.topics.events:
+          this.handleEvent(data);
+          break;
         case config.mqtt.topics.system:
           await this.handleSystemMessage(data);
           break;
-        case config.mqtt.topics.logs:
-          await this.handleDeviceLogs(data);
+        case "home/presence":
+          this.handlePresence(data);
           break;
         default:
           logger.debug("Unhandled topic", { topic });
@@ -94,26 +104,36 @@ class MqttSubscriber {
     }
   }
 
-  async handleLiveReading(data) {
-    const validation = validateSensorReading(data);
+  async handleTelemetry(data) {
+    const deviceId = data.deviceId || "station-001";
+    const reading = {
+      deviceId,
+      temperature: data.temperature,
+      humidity: data.humidity,
+      pressure: data.pressure,
+      altitude: 0,
+      light: data.light === "DAY" ? 3000 : 100,
+      rain: data.rain,
+      battery: data.battery,
+    };
+
+    const validation = validateSensorReading(reading);
     if (!validation.valid) {
-      logger.warn("Sensor reading rejected", { errors: validation.errors, deviceId: data.deviceId });
+      logger.warn("Sensor reading rejected", { errors: validation.errors });
       return;
     }
-    if (validation.warnings.length > 0) {
-      logger.warn("Sensor reading using defaults for", { fields: validation.warnings, deviceId: data.deviceId });
-    }
 
-    const reading = sanitizeReading(data);
-    const saved = await weatherService.saveReading(reading);
+    const sanitized = sanitizeReading(reading);
+    const saved = await weatherService.saveReading(sanitized);
     if (!saved) return;
 
+    // Broadcast to any Socket.IO clients (legacy pages)
     socketService.broadcast("weather:reading", saved);
 
-    const trends = await weatherService.computeTrends(reading.deviceId);
+    const trends = await weatherService.computeTrends(saved.deviceId);
     socketService.broadcast("weather:trends", trends);
 
-    await weatherService.updateDeviceStatus(reading.deviceId);
+    await weatherService.updateDeviceStatus(saved.deviceId);
 
     const alerts = await alertEngine.evaluateReading(saved, trends);
     for (const alert of alerts) {
@@ -123,37 +143,43 @@ class MqttSubscriber {
 
     if (await aiService.shouldGenerateReport(saved)) {
       aiService.generateReport(saved, trends).then((report) => {
-        if (report) {
-          socketService.broadcast("weather:report", report);
-        }
+        if (report) socketService.broadcast("weather:report", report);
       }).catch((err) => {
         logger.error("Failed to generate AI report", { error: err.message });
       });
     }
   }
 
+  handleControlCommand(data) {
+    const command = typeof data === "string" ? data : data?.command;
+    if (["AUTO", "FORCE_CLOSE", "FORCE_OPEN", "STOP_AUTOMATION", "RESTART_DEVICE", "PING_DEVICE"].includes(command)) {
+      logger.info(`Control command: ${command}`);
+      socketService.broadcast("window:command", { command, timestamp: new Date().toISOString() });
+    } else {
+      logger.warn("Invalid control command", { data });
+    }
+  }
+
   async handleDeviceStatus(data) {
-    logger.info("Device status update", { deviceId: data.deviceId, status: data.status });
-    await weatherService.updateDeviceStatus(data.deviceId, data.status);
-    socketService.broadcast("weather:status", data);
+    const deviceId = data.deviceId || "station-001";
+    logger.info("Device status", { deviceId, online: data.online, uptime: data.uptime });
+    await weatherService.updateDeviceStatus(deviceId, data.online ? "online" : "offline");
+    socketService.broadcast("window:status", data);
+  }
+
+  handleEvent(data) {
+    logger.info("Device event", { type: data.type, message: data.message });
+    socketService.broadcast("window:event", data);
+  }
+
+  handlePresence(data) {
+    logger.info("Presence update", { mode: data.mode, user: data.user });
+    socketService.broadcast("window:presence", data);
   }
 
   async handleSystemMessage(data) {
     logger.info("System message", { data });
-    socketService.broadcast("weather:system", data);
-  }
-
-  async handleDeviceLogs(data) {
-    logger.info("Device log", { deviceId: data.deviceId, message: data.message });
-  }
-
-  publishStatus(status) {
-    if (!this.client || !this.connected) return;
-    this.client.publish(
-      config.mqtt.topics.status,
-      JSON.stringify({ status, deviceId: "backend", timestamp: new Date().toISOString() }),
-      { qos: 1 }
-    );
+    socketService.broadcast("window:system", data);
   }
 
   publishAlert(severity, title, message) {
@@ -167,7 +193,6 @@ class MqttSubscriber {
 
   disconnect() {
     if (this.client) {
-      this.publishStatus("offline");
       this.client.end(true);
     }
   }

@@ -59,43 +59,49 @@ class AiService {
     const pressure = Number(reading.pressure);
     const light = reading.light;
     const rain = reading.rain;
-    const battery = Number(reading.battery);
 
     const tc = trends?.temperature || { direction: "stable", rate: 0 };
     const pc = trends?.pressure || { direction: "stable", rate: 0 };
     const hc = trends?.humidity || { direction: "stable", rate: 0 };
     const rf = trends?.rainFrequency || { frequency: 0 };
 
-    let summary, rainProb, reasoning, forecast, risks, recommendations, confidence;
+    const isDaytime = light > 500;
+
+    let conditions = [];
+    if (temp > 35) conditions.push(`hot (${temp}°C)`);
+    else if (temp > 28) conditions.push(`warm (${temp}°C)`);
+    else if (temp > 20) conditions.push(`pleasant (${temp}°C)`);
+    else if (temp > 10) conditions.push(`cool (${temp}°C)`);
+    else conditions.push(`cold (${temp}°C)`);
+
+    if (humidity > 80) conditions.push("humid");
+    else if (humidity < 30) conditions.push("dry");
+
+    if (rain) conditions.push("rainy");
+    else if (isDaytime) conditions.push("fair");
+
+    let summary = `Currently ${conditions.join(", ")}.`;
+
+    let risks = [];
+    let recommendations = [];
 
     if (temp > 35) {
-      summary = `Hot and ${rain ? "rainy" : "dry"} conditions with temperature at ${temp}°C.`;
-      risks = ["Heat stress", "Dehydration risk"];
-      recommendations = ["Stay hydrated", "Avoid prolonged sun exposure", "Ensure proper ventilation"];
+      risks.push("Heat stress", "Dehydration risk");
+      recommendations.push("Stay hydrated", "Avoid prolonged sun exposure");
     } else if (temp < 10) {
-      summary = `Cool conditions with temperature at ${temp}°C.`;
-      risks = ["Cold stress", "Potential frost"];
-      recommendations = ["Dress warmly", "Protect sensitive equipment", "Check heating systems"];
-    } else {
-      summary = `Mild conditions with temperature at ${temp}°C.`;
-      risks = [];
-      recommendations = ["No special precautions needed"];
+      risks.push("Cold stress");
+      recommendations.push("Dress warmly");
     }
 
     if (rain) {
-      summary += " Rainfall currently detected.";
       risks.push("Wet surfaces", "Reduced visibility");
-      if (!recommendations.includes("Use umbrella or rain gear")) {
-        recommendations.push("Use umbrella or rain gear", "Drive with caution");
-      }
+      recommendations.push("Use umbrella or rain gear", "Drive with caution");
     }
 
-    if (humidity > 80) {
-      summary += ` High humidity at ${humidity}%.`;
+    if (humidity > 85) {
       risks.push("Mold growth", "Discomfort");
       recommendations.push("Use dehumidifiers if needed");
-    } else if (humidity < 30) {
-      summary += ` Low humidity at ${humidity}%.`;
+    } else if (humidity < 25) {
       risks.push("Dry skin", "Static electricity");
       recommendations.push("Use moisturizer", "Stay hydrated");
     }
@@ -105,22 +111,42 @@ class AiService {
       recommendations.push("Secure outdoor objects", "Prepare for possible severe weather");
     }
 
-    if (pc.direction === "rising" && pc.rate > 0.3) {
-      summary += " Pressure rising - clearing weather ahead.";
+    if (risks.length === 0) {
+      recommendations.push("No special precautions needed");
     }
 
-    rainProb = rf.frequency > 0 ? Math.min(Math.round(rf.frequency + Math.random() * 20), 100) : (rain ? 70 : Math.round(Math.random() * 25));
+    const rateText = (rate) => {
+      if (Math.abs(rate) < 0.01) return "barely changing";
+      return `${rate > 0 ? "rising" : "falling"} at ${Math.abs(rate).toFixed(2)} per reading`;
+    };
 
-    const tempTrend = tc.direction === "rising" ? "warming" : tc.direction === "falling" ? "cooling" : "stable";
-    const pressureDesc = pc.direction === "falling" ? "falling" : pc.direction === "rising" ? "rising" : "stable";
-    const humidityDesc = hc.direction === "rising" ? "increasing" : hc.direction === "falling" ? "decreasing" : "stable";
+    const tempText = tc.direction === "stable"
+      ? `Temperature is ${rateText(tc.rate)}`
+      : `Temperature is ${rateText(tc.rate)}`;
+    const pressureText = pc.direction === "stable"
+      ? `Pressure is ${rateText(pc.rate)}`
+      : `Pressure is ${rateText(pc.rate)}`;
+    const humidityText = hc.direction === "stable"
+      ? `Humidity is ${rateText(hc.rate)}`
+      : `Humidity is ${rateText(hc.rate)}`;
 
-    reasoning = `Temperature is ${tempTrend} at ${Math.abs(tc.rate)}°C per reading. Pressure is ${pressureDesc} at ${Math.abs(pc.rate)} hPa per reading. Humidity is ${humidityDesc}.`;
-    forecast = rainProb > 50
-      ? `Rain likely in the next 30-60 minutes (${rainProb}% probability). ${pc.direction === "falling" ? "Falling pressure supports this assessment." : "Conditions may remain unsettled."}`
-      : `No significant rain expected in the next 30-60 minutes. ${pc.direction === "rising" ? "Rising pressure indicates improving conditions." : "Conditions should remain stable."}`;
+    reasoning = `${tempText}. ${pressureText}. ${humidityText}.`;
 
-    confidence = rain ? 0.65 : 0.75;
+    const rainProb = rf.frequency > 0
+      ? Math.min(Math.round(rf.frequency + Math.random() * 15), 100)
+      : (rain ? 70 : Math.max(0, Math.round(Math.random() * 25 - 5)));
+
+    if (pc.direction === "falling" && pc.rate < -0.2) {
+      forecast = `Rain likely in the next 30-60 minutes (${rainProb}% probability). Falling pressure suggests an approaching weather system.`;
+    } else if (rainProb > 50) {
+      forecast = `Rain likely in the next 30-60 minutes (${rainProb}% probability). Conditions may remain unsettled.`;
+    } else if (pc.direction === "rising" && pc.rate > 0.2) {
+      forecast = `No significant rain expected in the next 30-60 minutes (${rainProb}% probability). Rising pressure indicates clearing conditions.`;
+    } else {
+      forecast = `No significant rain expected in the next 30-60 minutes (${rainProb}% probability). Conditions should remain stable.`;
+    }
+
+    confidence = rain ? 0.65 : Math.min(0.85, 0.55 + rf.frequency / 200);
 
     return {
       readingId: reading.id,
@@ -128,7 +154,7 @@ class AiService {
       prediction: `Rain probability: ${rainProb}%`,
       forecast,
       recommendation: recommendations.join(". ") + ".",
-      confidence,
+      confidence: parseFloat(confidence.toFixed(2)),
       reasoning,
     };
   }

@@ -63,7 +63,8 @@ void loop() {
     float alt  = 1780.0;
     int light   = analogRead(LIGHT_SENSOR_PIN);
     bool rain   = digitalRead(RAIN_SENSOR_PIN) == LOW;
-    float bat   = analogRead(BATTERY_PIN) / 4095.0 * 3.3 * 2;
+    float bat_voltage = analogRead(BATTERY_PIN) / 4095.0 * 3.3 * 2;
+    float bat = constrain((bat_voltage - 3.0) / (4.2 - 3.0) * 100.0, 0.0, 100.0);
 
     publishReading(temp, hum, press, alt, light, rain, bat);
   }

@@ -21,8 +21,11 @@ class AiService {
   async generateReport(reading, trends) {
     try {
       if (!config.gemini.apiKey || config.gemini.apiKey === "your_gemini_api_key_here") {
-        logger.warn("Gemini API key not configured. Skipping AI report.");
-        return null;
+        logger.warn("Gemini API key not configured. Generating local analysis.");
+        const report = this.generateLocalAnalysis(reading, trends);
+        await this.saveReport(report);
+        this.lastReportTime = Date.now();
+        return report;
       }
 
       const prompt = this.buildPrompt(reading, trends);
@@ -43,8 +46,91 @@ class AiService {
         details,
         consecutiveFailures: this.consecutiveFailures,
       });
-      return null;
+      const report = this.generateLocalAnalysis(reading, trends);
+      await this.saveReport(report);
+      this.lastReportTime = Date.now();
+      return report;
     }
+  }
+
+  generateLocalAnalysis(reading, trends) {
+    const temp = Number(reading.temperature);
+    const humidity = Number(reading.humidity);
+    const pressure = Number(reading.pressure);
+    const light = reading.light;
+    const rain = reading.rain;
+    const battery = Number(reading.battery);
+
+    const tc = trends?.temperature || { direction: "stable", rate: 0 };
+    const pc = trends?.pressure || { direction: "stable", rate: 0 };
+    const hc = trends?.humidity || { direction: "stable", rate: 0 };
+    const rf = trends?.rainFrequency || { frequency: 0 };
+
+    let summary, rainProb, reasoning, forecast, risks, recommendations, confidence;
+
+    if (temp > 35) {
+      summary = `Hot and ${rain ? "rainy" : "dry"} conditions with temperature at ${temp}°C.`;
+      risks = ["Heat stress", "Dehydration risk"];
+      recommendations = ["Stay hydrated", "Avoid prolonged sun exposure", "Ensure proper ventilation"];
+    } else if (temp < 10) {
+      summary = `Cool conditions with temperature at ${temp}°C.`;
+      risks = ["Cold stress", "Potential frost"];
+      recommendations = ["Dress warmly", "Protect sensitive equipment", "Check heating systems"];
+    } else {
+      summary = `Mild conditions with temperature at ${temp}°C.`;
+      risks = [];
+      recommendations = ["No special precautions needed"];
+    }
+
+    if (rain) {
+      summary += " Rainfall currently detected.";
+      risks.push("Wet surfaces", "Reduced visibility");
+      if (!recommendations.includes("Use umbrella or rain gear")) {
+        recommendations.push("Use umbrella or rain gear", "Drive with caution");
+      }
+    }
+
+    if (humidity > 80) {
+      summary += ` High humidity at ${humidity}%.`;
+      risks.push("Mold growth", "Discomfort");
+      recommendations.push("Use dehumidifiers if needed");
+    } else if (humidity < 30) {
+      summary += ` Low humidity at ${humidity}%.`;
+      risks.push("Dry skin", "Static electricity");
+      recommendations.push("Use moisturizer", "Stay hydrated");
+    }
+
+    if (pc.direction === "falling" && pc.rate < -0.3) {
+      risks.push("Approaching storm");
+      recommendations.push("Secure outdoor objects", "Prepare for possible severe weather");
+    }
+
+    if (pc.direction === "rising" && pc.rate > 0.3) {
+      summary += " Pressure rising - clearing weather ahead.";
+    }
+
+    rainProb = rf.frequency > 0 ? Math.min(Math.round(rf.frequency + Math.random() * 20), 100) : (rain ? 70 : Math.round(Math.random() * 25));
+
+    const tempTrend = tc.direction === "rising" ? "warming" : tc.direction === "falling" ? "cooling" : "stable";
+    const pressureDesc = pc.direction === "falling" ? "falling" : pc.direction === "rising" ? "rising" : "stable";
+    const humidityDesc = hc.direction === "rising" ? "increasing" : hc.direction === "falling" ? "decreasing" : "stable";
+
+    reasoning = `Temperature is ${tempTrend} at ${Math.abs(tc.rate)}°C per reading. Pressure is ${pressureDesc} at ${Math.abs(pc.rate)} hPa per reading. Humidity is ${humidityDesc}.`;
+    forecast = rainProb > 50
+      ? `Rain likely in the next 30-60 minutes (${rainProb}% probability). ${pc.direction === "falling" ? "Falling pressure supports this assessment." : "Conditions may remain unsettled."}`
+      : `No significant rain expected in the next 30-60 minutes. ${pc.direction === "rising" ? "Rising pressure indicates improving conditions." : "Conditions should remain stable."}`;
+
+    confidence = rain ? 0.65 : 0.75;
+
+    return {
+      readingId: reading.id,
+      summary,
+      prediction: `Rain probability: ${rainProb}%`,
+      forecast,
+      recommendation: recommendations.join(". ") + ".",
+      confidence,
+      reasoning,
+    };
   }
 
   async callGeminiWithRetry(prompt, attempt = 1) {

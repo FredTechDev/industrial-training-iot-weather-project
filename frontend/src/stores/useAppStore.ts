@@ -35,7 +35,6 @@ export const useAppStore = create<AppState>((set) => ({
     tempHigh: 30,
     tempLow: 18,
     humidityHigh: 80,
-    pressureDrop: 5,
     nightLightThreshold: 200,
     batteryLow: 20,
     telemetryInterval: 15,

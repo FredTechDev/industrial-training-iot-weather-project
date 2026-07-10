@@ -6,21 +6,28 @@ export function useTelemetry() {
   const telemetry = useAppStore((s) => s.telemetry);
 
   const tempLevel = useMemo(() => {
-    if (!telemetry) return "normal";
+    if (!telemetry || telemetry.temperature == null) return "normal";
     const t = telemetry.temperature;
     if (t < SENSOR_THRESHOLDS.temp.danger.low || t > SENSOR_THRESHOLDS.temp.danger.high) return "danger";
     return "normal";
   }, [telemetry]);
 
   const humidityLevel = useMemo(() => {
-    if (!telemetry) return "normal";
+    if (!telemetry || telemetry.humidity == null) return "normal";
     const h = telemetry.humidity;
     if (h > SENSOR_THRESHOLDS.humidity.danger.high || h < SENSOR_THRESHOLDS.humidity.danger.low) return "danger";
     return "normal";
   }, [telemetry]);
 
+  const pressureLevel = useMemo(() => {
+    if (!telemetry || telemetry.pressure == null) return "normal";
+    const p = telemetry.pressure;
+    if (p < SENSOR_THRESHOLDS.pressure.danger.low || p > SENSOR_THRESHOLDS.pressure.danger.high) return "danger";
+    return "normal";
+  }, [telemetry]);
+
   const batteryLevel = useMemo(() => {
-    if (!telemetry) return "normal";
+    if (!telemetry || telemetry.battery == null) return "normal";
     if (telemetry.battery < SENSOR_THRESHOLDS.battery.danger.low) return "danger";
     if (telemetry.battery < 40) return "warning";
     return "normal";
@@ -35,5 +42,5 @@ export function useTelemetry() {
     }
   }, [telemetry]);
 
-  return { telemetry, tempLevel, humidityLevel, batteryLevel, threatColor };
+  return { telemetry, tempLevel, humidityLevel, pressureLevel, batteryLevel, threatColor };
 }

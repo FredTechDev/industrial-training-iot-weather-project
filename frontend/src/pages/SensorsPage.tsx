@@ -4,7 +4,7 @@ import Gauge from "../components/common/Gauge";
 import BatteryIndicator from "../components/common/BatteryIndicator";
 import StatusBadge from "../components/common/StatusBadge";
 import { SENSOR_THRESHOLDS } from "../constants";
-import { CloudRain, Sun, Moon, Thermometer, Droplets, Gauge as GaugeIcon } from "lucide-react";
+import { CloudRain, Sun, Moon, Thermometer, Droplets, Gauge } from "lucide-react";
 
 function SensorCard({ title, icon: Icon, children, delay = 0 }: {
   title: string; icon: React.ElementType; children: React.ReactNode; delay?: number;
@@ -28,7 +28,7 @@ function SensorCard({ title, icon: Icon, children, delay = 0 }: {
 }
 
 export default function SensorsPage() {
-  const { telemetry, tempLevel, humidityLevel, batteryLevel } = useTelemetry();
+  const { telemetry, tempLevel, humidityLevel, pressureLevel, batteryLevel } = useTelemetry();
 
   return (
     <div className="space-y-6">
@@ -37,7 +37,7 @@ export default function SensorsPage() {
         <p className="text-gray-400 text-sm">Real-time environmental readings from ESP32</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {/* Temperature */}
         <SensorCard title="Temperature" icon={Thermometer} delay={0}>
           <div className="flex justify-center">
@@ -77,26 +77,25 @@ export default function SensorsPage() {
         </SensorCard>
 
         {/* Pressure */}
-        <SensorCard title="Pressure" icon={GaugeIcon} delay={0.1}>
+        <SensorCard title="Atmospheric Pressure" icon={Gauge} delay={0.1}>
           <div className="flex justify-center">
             <Gauge
               value={telemetry?.pressure ?? 0}
               min={SENSOR_THRESHOLDS.pressure.min}
               max={SENSOR_THRESHOLDS.pressure.max}
               label="Pressure"
-              unit="hPa"
+              unit=" hPa"
               color="#8b5cf6"
+              dangerLow={SENSOR_THRESHOLDS.pressure.danger.low}
+              dangerHigh={SENSOR_THRESHOLDS.pressure.danger.high}
             />
           </div>
-          <div className="mt-2 text-center">
-            {(telemetry?.pressure ?? 0) < 1000 ? (
-              <span className="text-xs text-amber-400">↓ Low — Storm risk</span>
-            ) : (telemetry?.pressure ?? 0) > 1020 ? (
-              <span className="text-xs text-blue-400">↑ High pressure</span>
-            ) : (
-              <span className="text-xs text-emerald-400">→ Normal</span>
-            )}
-          </div>
+          {!telemetry?.pressure && (
+            <p className="text-gray-500 text-xs text-center mt-2">Waiting for data...</p>
+          )}
+          {telemetry?.pressure && telemetry.pressure < SENSOR_THRESHOLDS.pressure.danger.low && (
+            <p className="text-amber-400 text-xs text-center mt-2 font-medium">⚠ Low pressure — storm risk</p>
+          )}
         </SensorCard>
 
         {/* Rain */}
@@ -124,15 +123,15 @@ export default function SensorsPage() {
         <SensorCard title="Light Level" icon={Sun} delay={0.2}>
           <div className="flex flex-col items-center gap-3 py-4">
             <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
-              {telemetry?.light === "NIGHT" ? (
+              {telemetry?.lightState === "NIGHT" ? (
                 <Moon size={32} className="text-indigo-400" />
               ) : (
                 <Sun size={32} className="text-yellow-400" />
               )}
             </div>
             <StatusBadge
-              status={telemetry?.light || "DAY"}
-              color={telemetry?.light === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
+              status={telemetry?.lightState || "DAY"}
+              color={telemetry?.lightState === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
             />
           </div>
         </SensorCard>

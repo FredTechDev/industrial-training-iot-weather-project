@@ -2,20 +2,6 @@ const config = require("../config");
 
 const { thresholds } = config;
 
-const DEFAULTS = {
-  temperature: 25,
-  humidity: 60,
-  pressure: 1013,
-  altitude: 1780,
-  light: 0,
-  battery: 100,
-  rain: false,
-};
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
 function validateSensorReading(data) {
   const warnings = [];
 
@@ -33,10 +19,6 @@ function validateSensorReading(data) {
 
   if (data.pressure === undefined || data.pressure === null || typeof data.pressure !== "number" || data.pressure < thresholds.minPressure || data.pressure > thresholds.maxPressure) {
     warnings.push(`pressure`);
-  }
-
-  if (data.altitude !== undefined && data.altitude !== null && (typeof data.altitude !== "number" || data.altitude < thresholds.minAltitude || data.altitude > thresholds.maxAltitude)) {
-    warnings.push(`altitude`);
   }
 
   if (data.light !== undefined && data.light !== null && (typeof data.light !== "number" || data.light < thresholds.minLight || data.light > thresholds.maxLight)) {
@@ -58,23 +40,20 @@ function sanitizeReading(data) {
     deviceId: data.deviceId || "station-001",
     temperature: data.temperature !== undefined && typeof data.temperature === "number" && data.temperature >= thresholds.minTemperature && data.temperature <= thresholds.maxTemperature
       ? parseFloat(data.temperature.toFixed(1))
-      : DEFAULTS.temperature + (Math.random() * 4 - 2),
+      : null,
     humidity: data.humidity !== undefined && typeof data.humidity === "number" && data.humidity >= thresholds.minHumidity && data.humidity <= thresholds.maxHumidity
-      ? clamp(parseFloat(data.humidity.toFixed(1)), thresholds.minHumidity, thresholds.maxHumidity)
-      : DEFAULTS.humidity + (Math.random() * 10 - 5),
+      ? parseFloat(data.humidity.toFixed(1))
+      : null,
     pressure: data.pressure !== undefined && typeof data.pressure === "number" && data.pressure >= thresholds.minPressure && data.pressure <= thresholds.maxPressure
       ? parseFloat(data.pressure.toFixed(1))
-      : DEFAULTS.pressure + (Math.random() * 6 - 3),
-    altitude: data.altitude !== undefined && typeof data.altitude === "number" && data.altitude >= thresholds.minAltitude && data.altitude <= thresholds.maxAltitude
-      ? parseFloat(data.altitude.toFixed(1))
-      : DEFAULTS.altitude + (Math.random() * 20 - 10),
+      : null,
     light: data.light !== undefined && typeof data.light === "number" && data.light >= thresholds.minLight && data.light <= thresholds.maxLight
       ? parseInt(data.light, 10)
-      : DEFAULTS.light,
+      : null,
     rain: data.rain === true || data.rain === "true",
     battery: data.battery !== undefined && typeof data.battery === "number" && data.battery >= thresholds.minBattery && data.battery <= thresholds.maxBattery
-      ? clamp(parseFloat(data.battery.toFixed(1)), thresholds.minBattery, thresholds.maxBattery)
-      : DEFAULTS.battery,
+      ? parseFloat(data.battery.toFixed(1))
+      : null,
     recordedAt: data.timestamp ? new Date(data.timestamp) : new Date(),
   };
 }

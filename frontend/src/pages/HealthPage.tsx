@@ -77,7 +77,6 @@ export default function HealthPage() {
             <div className="space-y-3">
               {[
                 { label: "DHT22", desc: "Temperature & Humidity", status: "active" },
-                { label: "BMP280", desc: "Barometric Pressure", status: "active" },
                 { label: "YL-83", desc: "Rain Detection", status: telemetry?.rain ? "alert" : "active" },
                 { label: "LDR", desc: "Light Sensor", status: "active" },
                 { label: "Servo SG90", desc: "Window Actuator", status: "active" },

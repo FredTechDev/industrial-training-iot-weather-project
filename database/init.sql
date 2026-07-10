@@ -18,25 +18,11 @@ CREATE TABLE IF NOT EXISTS weather_readings (
     device_id VARCHAR(50) NOT NULL DEFAULT 'station-001',
     temperature DECIMAL(5, 1) NOT NULL,
     humidity DECIMAL(5, 1) NOT NULL,
-    pressure DECIMAL(7, 1) NOT NULL,
-    altitude DECIMAL(7, 1) NOT NULL DEFAULT 0,
-    light INTEGER NOT NULL DEFAULT 0,
+    pressure DECIMAL(6, 1),
+    light INTEGER,
     rain BOOLEAN NOT NULL DEFAULT FALSE,
-    battery DECIMAL(5, 1) NOT NULL DEFAULT 100,
+    battery DECIMAL(5, 1),
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- AI reports table
-CREATE TABLE IF NOT EXISTS ai_reports (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    reading_id UUID REFERENCES weather_readings(id) ON DELETE SET NULL,
-    summary TEXT NOT NULL,
-    prediction TEXT NOT NULL,
-    forecast TEXT,
-    recommendation TEXT NOT NULL,
-    confidence DECIMAL(3, 2) NOT NULL DEFAULT 0.00,
-    reasoning TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -62,9 +48,9 @@ CREATE TABLE IF NOT EXISTS trend_snapshots (
     avg_humidity DECIMAL(5, 1),
     min_humidity DECIMAL(5, 1),
     max_humidity DECIMAL(5, 1),
-    avg_pressure DECIMAL(7, 1),
-    min_pressure DECIMAL(7, 1),
-    max_pressure DECIMAL(7, 1),
+    avg_pressure DECIMAL(6, 1),
+    min_pressure DECIMAL(6, 1),
+    max_pressure DECIMAL(6, 1),
     avg_light INTEGER,
     rain_count INTEGER,
     sample_count INTEGER NOT NULL DEFAULT 0,
@@ -89,6 +75,5 @@ CREATE INDEX IF NOT EXISTS idx_readings_device_time ON weather_readings(device_i
 CREATE INDEX IF NOT EXISTS idx_readings_recorded_at ON weather_readings(recorded_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_severity ON alerts(severity, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_reports_created ON ai_reports(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_trends_device_period ON trend_snapshots(device_id, period, calculated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_devices_status ON devices(status);

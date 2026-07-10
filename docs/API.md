@@ -35,8 +35,7 @@ GET /api/weather/latest?deviceId=station-001
   "deviceId": "station-001",
   "temperature": 28.4,
   "humidity": 71.0,
-  "pressure": 1008.0,
-  "altitude": 1780.0,
+  "pressure": 1013.2,
   "light": 3200,
   "rain": false,
   "battery": 100.0,
@@ -92,9 +91,9 @@ GET /api/weather/trends?deviceId=station-001
   "hourly": { "TrendStats" },
   "sixHour": { "TrendStats" },
   "pressure": {
-    "direction": "falling",
-    "rate": -0.15,
-    "description": "Pressure gradually decreasing"
+    "direction": "stable",
+    "rate": 0.02,
+    "description": "Pressure is stable"
   },
   "temperature": {
     "direction": "stable",
@@ -160,35 +159,6 @@ PATCH /api/alerts/:id/resolve
 ```
 
 **Response 200:** Updated alert object with `resolvedAt` timestamp.
-
-## Report Endpoints
-
-### Get AI Reports
-
-```
-GET /api/reports?limit=20
-```
-
-**Parameters:**
-- `limit` (query, optional) - Max results (default: 20)
-
-**Response 200:**
-```json
-[
-  {
-    "id": "uuid",
-    "readingId": "uuid",
-    "summary": "Warm and humid conditions...",
-    "prediction": "Rain probability: 65%",
-    "forecast": "Rain likely within 30 minutes...",
-    "recommendation": "Carry umbrella. Drive carefully.",
-    "confidence": 0.78,
-    "reasoning": "Analysis reasoning text...",
-    "createdAt": "2026-01-15T10:30:00.000Z",
-    "reading": { "WeatherReading" }
-  }
-]
-```
 
 ## Device Endpoints
 
@@ -291,6 +261,5 @@ HTTP Status Codes:
 | `weather:reading` | WeatherReading | New sensor reading |
 | `weather:trends` | TrendData | Computed trend analysis |
 | `weather:alert` | Alert | New alert generated |
-| `weather:report` | AiReport | New AI analysis |
 | `weather:status` | object | Device status change |
 | `weather:system` | object | System messages |

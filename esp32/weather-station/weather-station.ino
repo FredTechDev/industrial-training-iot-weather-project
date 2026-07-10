@@ -27,10 +27,8 @@ const char* TOPIC_CONFIG    = "window/config";
 const char* TOPIC_PRESENCE  = "home/presence";
 
 // --- Sensor pins ---
-#define DHT22_PIN 4
-#define BMP280_ADDR 0x76
-#define LIGHT_SENSOR_PIN 34
 #define RAIN_SENSOR_PIN 35
+#define LIGHT_SENSOR_PIN 34
 #define BATTERY_PIN 32
 #define SERVO_PIN 13
 
@@ -60,7 +58,6 @@ unsigned long startTime = 0;
 float tempHigh         = 30.0;
 float tempLow          = 18.0;
 float humidityHigh     = 80.0;
-float pressureDrop     = 5.0;
 int   nightLightThresh = 200;
 float batteryLow       = 20.0;
 
@@ -68,18 +65,15 @@ WiFiClient wifiClient;
 WiFiClientSecure tlsClient;
 PubSubClient mqtt(MQTT_TLS ? tlsClient : wifiClient);
 
-float lastPressure = 0;
-
 void connectWiFi();
 void connectMQTT();
 void callback(char* topic, byte* payload, unsigned int length);
-void publishTelemetry(float temp, float hum, float press, int lightRaw, bool rain, float bat);
+void publishTelemetry(bool rain, float lightRaw, float bat);
 void publishStatus();
 void publishEvent(const char* type, const char* message);
-void evaluateAutoMode(float temp, float hum, float press, int lightRaw, bool rain, float bat);
+void evaluateAutoMode(bool rain, float lightRaw, float bat);
 void moveServo(int angle);
-String classifyLight(int raw);
-String classifyPrediction(float press, bool rain);
+String classifyPrediction(bool rain);
 
 void setup() {
   Serial.begin(115200);
@@ -87,8 +81,8 @@ void setup() {
 
   if (MQTT_TLS) tlsClient.setInsecure();
 
-  pinMode(LIGHT_SENSOR_PIN, INPUT);
   pinMode(RAIN_SENSOR_PIN, INPUT);
+  pinMode(LIGHT_SENSOR_PIN, INPUT);
   pinMode(BATTERY_PIN, INPUT);
 
   windowServo.attach(SERVO_PIN);
@@ -105,29 +99,22 @@ void loop() {
 
   unsigned long now = millis();
 
-  // Publish telemetry every 15s
   if (now - lastPublish >= PUBLISH_INTERVAL) {
     lastPublish = now;
 
-    float temp = 25.0 + random(-50, 50) / 10.0;
-    float hum  = 60.0 + random(-100, 100) / 10.0;
-    float press = 1008.0 + random(-20, 20) / 10.0;
-    int lightRaw = analogRead(LIGHT_SENSOR_PIN);
-    bool rain    = digitalRead(RAIN_SENSOR_PIN) == LOW;
+    bool rain      = digitalRead(RAIN_SENSOR_PIN) == LOW;
+    int lightRaw   = analogRead(LIGHT_SENSOR_PIN);
     float bat_voltage = analogRead(BATTERY_PIN) / 4095.0 * 3.3 * 2;
     float bat = constrain((bat_voltage - 3.0) / (4.2 - 3.0) * 100.0, 0.0, 100.0);
 
     if (currentMode == MODE_AUTO) {
-      evaluateAutoMode(temp, hum, press, lightRaw, rain, bat);
+      evaluateAutoMode(rain, lightRaw, bat);
     }
 
-    prediction = classifyPrediction(press, rain);
-    publishTelemetry(temp, hum, press, lightRaw, rain, bat);
-
-    lastPressure = press;
+    prediction = classifyPrediction(rain);
+    publishTelemetry(rain, lightRaw, bat);
   }
 
-  // Publish status every 30s
   if (now - lastStatus >= STATUS_INTERVAL) {
     lastStatus = now;
     publishStatus();
@@ -184,9 +171,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
   if (String(topic) == TOPIC_PRESENCE) {
-    // Parse {"mode":"HOME","user":"Fredrick","timestamp":"..."}
     StaticJsonDocument<128> pdoc;
-    if (deserializeJson(pdoc, message) == DeserializationOk) {
+    if (deserializeJson(pdoc, message) == DeserializationError::Ok) {
       const char* pMode = pdoc["mode"];
       if (pMode) {
         presence = String(pMode);
@@ -199,11 +185,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   if (String(topic) == TOPIC_CONFIG) {
     StaticJsonDocument<256> doc;
-    if (deserializeJson(doc, message) == DeserializationOk) {
+    if (deserializeJson(doc, message) == DeserializationError::Ok) {
       if (doc.containsKey("tempHigh")) tempHigh = doc["tempHigh"];
       if (doc.containsKey("tempLow")) tempLow = doc["tempLow"];
       if (doc.containsKey("humidityHigh")) humidityHigh = doc["humidityHigh"];
-      if (doc.containsKey("pressureDrop")) pressureDrop = doc["pressureDrop"];
       if (doc.containsKey("nightLightThreshold")) nightLightThresh = doc["nightLightThreshold"];
       if (doc.containsKey("batteryLow")) batteryLow = doc["batteryLow"];
       publishEvent("success", "Configuration updated");
@@ -212,8 +197,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-void evaluateAutoMode(float temp, float hum, float press, int lightRaw, bool rain, float bat) {
-  // Priority 1: AWAY or VACATION → always close window (security first)
+void evaluateAutoMode(bool rain, int lightRaw, float bat) {
   if (presence == "AWAY" || presence == "VACATION") {
     moveServo(SERVO_CLOSED);
     windowState = "CLOSED";
@@ -221,7 +205,6 @@ void evaluateAutoMode(float temp, float hum, float press, int lightRaw, bool rai
     return;
   }
 
-  // Priority 2: Rain → close
   if (rain) {
     moveServo(SERVO_CLOSED);
     windowState = "CLOSED";
@@ -229,15 +212,6 @@ void evaluateAutoMode(float temp, float hum, float press, int lightRaw, bool rai
     return;
   }
 
-  // Priority 3: Storm prediction (rapid pressure drop)
-  if (lastPressure > 0 && (lastPressure - press) > pressureDrop) {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
-    reason = "STORM_PREDICTION";
-    return;
-  }
-
-  // Priority 4: Low battery → emergency safe-close
   if (bat < batteryLow) {
     moveServo(SERVO_CLOSED);
     windowState = "CLOSED";
@@ -245,7 +219,6 @@ void evaluateAutoMode(float temp, float hum, float press, int lightRaw, bool rai
     return;
   }
 
-  // Priority 5: Night security
   int hour = (millis() / 3600000) % 24;
   if (hour >= 22 || hour < 6) {
     moveServo(SERVO_CLOSED);
@@ -254,36 +227,20 @@ void evaluateAutoMode(float temp, float hum, float press, int lightRaw, bool rai
     return;
   }
 
-  // Priority 6: Temperature out of comfort range
-  if (temp > tempHigh || temp < tempLow) {
+  if (lightRaw < nightLightThresh) {
     moveServo(SERVO_CLOSED);
     windowState = "CLOSED";
-    reason = "TEMP_LIMIT";
+    reason = "NIGHT_SECURITY";
     return;
   }
 
-  // Priority 7: High humidity
-  if (hum > humidityHigh) {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
-    reason = "HIGH_HUMIDITY";
-    return;
-  }
-
-  // All clear → open window (only if HOME)
   moveServo(SERVO_OPEN);
   windowState = "OPEN";
   reason = "SAFE";
 }
 
-String classifyLight(int raw) {
-  return (raw < nightLightThresh) ? "NIGHT" : "DAY";
-}
-
-String classifyPrediction(float press, bool rain) {
+String classifyPrediction(bool rain) {
   if (rain) return "WARNING";
-  if (lastPressure > 0 && (lastPressure - press) > pressureDrop) return "CRITICAL";
-  if (press < 990) return "WARNING";
   return "SAFE";
 }
 
@@ -293,14 +250,14 @@ void moveServo(int angle) {
   Serial.println(angle);
 }
 
-void publishTelemetry(float temp, float hum, float press, int lightRaw, bool rain, float bat) {
+void publishTelemetry(bool rain, int lightRaw, float bat) {
+  const char* lightState = lightRaw >= nightLightThresh ? "DAY" : "NIGHT";
+
   StaticJsonDocument<384> doc;
-  doc["deviceId"]   = DEVICE_ID;
-  doc["temperature"] = temp;
-  doc["humidity"]    = hum;
-  doc["pressure"]    = press;
+  doc["deviceId"]    = DEVICE_ID;
   doc["rain"]        = rain;
-  doc["light"]       = classifyLight(lightRaw);
+  doc["light"]       = lightRaw;
+  doc["lightState"]  = lightState;
   doc["battery"]     = bat;
   doc["window"]      = windowState;
   doc["mode"]        = currentModeStr;
@@ -320,7 +277,7 @@ void publishStatus() {
   doc["deviceId"]      = DEVICE_ID;
   doc["online"]      = true;
   doc["uptime"]      = (millis() - startTime) / 1000;
-  doc["firmware"]    = "2.0.0";
+  doc["firmware"]    = "3.0.0";
   doc["ip"]          = WiFi.localIP().toString();
   doc["wifiSignal"]  = WiFi.RSSI();
   doc["heapFree"]    = ESP.getFreeHeap();

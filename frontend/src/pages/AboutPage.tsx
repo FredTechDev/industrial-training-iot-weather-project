@@ -13,7 +13,7 @@ export default function AboutPage() {
         <h2 className="text-lg font-semibold mb-3">Project Objectives</h2>
         <p className="text-gray-300 text-sm leading-relaxed">
           This system automatically manages window positioning based on real-time environmental analysis.
-          An ESP32 microcontroller monitors temperature, humidity, barometric pressure, rain, light levels,
+          An ESP32 microcontroller monitors temperature, humidity, rain, light levels,
           and battery status. Using edge computing, it decides whether the window should open or close
           to maintain comfort, safety, and security. The dashboard serves as a remote command center,
           enabling real-time monitoring and manual override via MQTT.
@@ -25,7 +25,7 @@ export default function AboutPage() {
           { icon: Cpu, title: "ESP32 Edge Computing", desc: "Local sensor fusion and autonomous decision-making without cloud dependency" },
           { icon: Radio, title: "MQTT over TLS", desc: "Secure bidirectional communication via HiveMQ Cloud using WSS protocol" },
           { icon: Cloud, title: "Cloud Integration", desc: "Real-time telemetry streaming with automatic reconnection and state sync" },
-          { icon: Brain, title: "Intelligent Automation", desc: "Multi-factor decision engine: rain, storm prediction, night security, temperature limits, battery safety" },
+          { icon: Brain, title: "Intelligent Automation", desc: "Multi-factor decision engine: rain, night security, temperature limits, battery safety" },
         ].map((item, i) => (
           <motion.div
             key={item.title}
@@ -48,7 +48,6 @@ export default function AboutPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
             { name: "DHT22", purpose: "Temperature & Humidity" },
-            { name: "BMP280", purpose: "Barometric Pressure" },
             { name: "YL-83", purpose: "Rain Detection" },
             { name: "LDR", purpose: "Light Intensity" },
             { name: "SG90 Servo", purpose: "Window Actuator" },

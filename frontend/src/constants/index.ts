@@ -42,7 +42,7 @@ export const REASON_LABELS: Record<string, { label: string; icon: string; color:
 export const SENSOR_THRESHOLDS = {
   temp: { min: -10, max: 50, danger: { low: 5, high: 40 } },
   humidity: { min: 0, max: 100, danger: { low: 20, high: 85 } },
-  pressure: { min: 900, max: 1100, danger: { low: 980, high: 1040 } },
+  pressure: { min: 900, max: 1100, danger: { low: 970, high: 1040 } },
   battery: { min: 0, max: 100, danger: { low: 20, high: 100 } },
 } as const;
 

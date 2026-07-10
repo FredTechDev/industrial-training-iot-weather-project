@@ -4,8 +4,8 @@ const logger = require("../utils/logger");
 const { validateSensorReading, sanitizeReading } = require("../utils/validation");
 const weatherService = require("../services/weatherService");
 const alertEngine = require("../services/alertEngine");
-const aiService = require("../services/aiService");
 const socketService = require("../services/socketService");
+const weatherApiService = require("../services/weatherApiService");
 
 class MqttSubscriber {
   constructor() {
@@ -106,15 +106,18 @@ class MqttSubscriber {
 
   async handleTelemetry(data) {
     const deviceId = data.deviceId || "station-001";
+
+    const apiData = await weatherApiService.getCurrentWeather();
+
     const reading = {
       deviceId,
-      temperature: data.temperature,
-      humidity: data.humidity,
-      pressure: data.pressure,
-      altitude: 0,
-      light: data.light === "DAY" ? 3000 : 100,
-      rain: data.rain,
-      battery: data.battery,
+      temperature: apiData?.temperature ?? null,
+      humidity: apiData?.humidity ?? null,
+      pressure: apiData?.pressure ?? null,
+      light: typeof data.light === "number" ? data.light : null,
+      lightState: data.lightState || (typeof data.light === "string" ? data.light : null),
+      rain: typeof data.rain === "boolean" ? data.rain : null,
+      battery: typeof data.battery === "number" ? data.battery : null,
     };
 
     const validation = validateSensorReading(reading);
@@ -127,8 +130,10 @@ class MqttSubscriber {
     const saved = await weatherService.saveReading(sanitized);
     if (!saved) return;
 
+    const broadcast = { ...saved, lightState: reading.lightState };
+
     // Broadcast to any Socket.IO clients (legacy pages)
-    socketService.broadcast("weather:reading", saved);
+    socketService.broadcast("weather:reading", broadcast);
 
     const trends = await weatherService.computeTrends(saved.deviceId);
     socketService.broadcast("weather:trends", trends);
@@ -139,14 +144,6 @@ class MqttSubscriber {
     for (const alert of alerts) {
       socketService.broadcast("weather:alert", alert);
       this.publishAlert(alert.severity, alert.title, alert.message);
-    }
-
-    if (await aiService.shouldGenerateReport(saved)) {
-      aiService.generateReport(saved, trends).then((report) => {
-        if (report) socketService.broadcast("weather:report", report);
-      }).catch((err) => {
-        logger.error("Failed to generate AI report", { error: err.message });
-      });
     }
   }
 

@@ -2,11 +2,11 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useAppStore } from "../stores/useAppStore";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, BarChart, Bar,
 } from "recharts";
 import { formatTime } from "../utils/format";
-import { Clock, Thermometer, Droplets, Gauge, Battery, CloudRain } from "lucide-react";
+import { Clock, Thermometer, Droplets, Battery, CloudRain, Gauge } from "lucide-react";
 
 const TIME_RANGES = [
   { label: "1H", minutes: 60 },
@@ -38,7 +38,7 @@ export default function AnalyticsPage() {
   const [range, setRange] = useState(60);
   const events = useAppStore((s) => s.events);
 
-  // Build chart data from events history (simulated based on available data)
+  // Build chart data from real telemetry
   const chartData = useMemo(() => {
     const now = Date.now();
     const cutoff = now - range * 60 * 1000;
@@ -51,23 +51,18 @@ export default function AnalyticsPage() {
   }, [events, range]);
 
   const sensorHistory = useAppStore((s) => s.telemetry);
-  // Use a simple array approach for demo
   const dataPoints = useMemo(() => {
-    const points = [];
     const base = sensorHistory;
     if (!base) return [];
-    for (let i = 0; i < Math.min(30, Math.max(5, range / 2)); i++) {
-      points.push({
-        time: `T-${i}`,
-        temp: base.temperature + (Math.random() - 0.5) * 4,
-        humidity: base.humidity + (Math.random() - 0.5) * 10,
-        pressure: base.pressure + (Math.random() - 0.5) * 3,
-        battery: Math.max(0, base.battery - i * 0.3),
-        rain: base.rain ? 1 : 0,
-      });
-    }
-    return points.reverse();
-  }, [sensorHistory, range]);
+    return [{
+      time: "Now",
+      temp: base.temperature,
+      humidity: base.humidity,
+        pressure: base.pressure || 0,
+      battery: base.battery,
+      rain: base.rain ? 1 : 0,
+    }];
+  }, [sensorHistory]);
 
   return (
     <div className="space-y-6">
@@ -135,15 +130,21 @@ export default function AnalyticsPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Pressure Trend" icon={Gauge} delay={0.1}>
+          <ChartCard title="Atmospheric Pressure" icon={Gauge} delay={0.1}>
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={dataPoints}>
+              <AreaChart data={dataPoints}>
+                <defs>
+                  <linearGradient id="presGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                 <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#6b7280" }} />
-                <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} />
+                <YAxis domain={[990, 1040]} tick={{ fontSize: 10, fill: "#6b7280" }} />
                 <Tooltip contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }} />
-                <Line type="monotone" dataKey="pressure" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-              </LineChart>
+                <Area type="monotone" dataKey="pressure" stroke="#8b5cf6" fill="url(#presGrad)" strokeWidth={2} />
+              </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
 

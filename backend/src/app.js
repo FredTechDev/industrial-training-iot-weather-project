@@ -13,7 +13,6 @@ const { errorHandler, notFound } = require("./middleware/errorHandler");
 
 const weatherRoutes = require("./routes/weather");
 const alertRoutes = require("./routes/alerts");
-const reportRoutes = require("./routes/reports");
 const deviceRoutes = require("./routes/devices");
 const statusRoutes = require("./routes/status");
 const dashboardRoutes = require("./routes/dashboard");
@@ -33,7 +32,6 @@ app.get("/health", (req, res) => {
 
 app.use("/api/weather", weatherRoutes);
 app.use("/api/alerts", alertRoutes);
-app.use("/api/reports", reportRoutes);
 app.use("/api/devices", deviceRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/dashboard", dashboardRoutes);

@@ -29,7 +29,6 @@ class WeatherService {
           temperature: reading.temperature,
           humidity: reading.humidity,
           pressure: reading.pressure,
-          altitude: reading.altitude,
           light: reading.light,
           rain: reading.rain,
           battery: reading.battery,

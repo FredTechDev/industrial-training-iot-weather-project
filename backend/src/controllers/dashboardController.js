@@ -12,7 +12,7 @@ exports.getDashboard = async (req, res) => {
       return res.json(cache);
     }
 
-    const [latest, totalReadingsRes, devices, alerts, reports] = await Promise.all([
+    const [latest, totalReadingsRes, devices, alerts] = await Promise.all([
       weatherService.getLatest(),
       prisma.weatherReading.count().catch(() => 0),
       weatherService.getAllDevices(),
@@ -21,9 +21,6 @@ exports.getDashboard = async (req, res) => {
         orderBy: { createdAt: "desc" },
         where: { status: "active" },
       }).catch(() => []),
-      prisma.aiReport.findFirst({
-        orderBy: { createdAt: "desc" },
-      }).catch(() => null),
     ]);
 
     cache = {
@@ -32,7 +29,6 @@ exports.getDashboard = async (req, res) => {
       latestReading: latest,
       devices,
       activeAlerts: alerts,
-      latestReport: reports,
       websocketClients: socketService.getConnectedCount(),
       timestamp: new Date().toISOString(),
     };
@@ -46,7 +42,6 @@ exports.getDashboard = async (req, res) => {
       latestReading: null,
       devices: [],
       activeAlerts: [],
-      latestReport: null,
       websocketClients: 0,
       timestamp: new Date().toISOString(),
     });

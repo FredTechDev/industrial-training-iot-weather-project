@@ -16,8 +16,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS weather_readings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_id VARCHAR(50) NOT NULL DEFAULT 'station-001',
-    temperature DECIMAL(5, 1) NOT NULL,
-    humidity DECIMAL(5, 1) NOT NULL,
+    temperature DECIMAL(5, 1),
+    humidity DECIMAL(5, 1),
     pressure DECIMAL(6, 1),
     light INTEGER,
     rain BOOLEAN NOT NULL DEFAULT FALSE,

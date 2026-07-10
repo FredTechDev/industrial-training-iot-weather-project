@@ -10,8 +10,8 @@ datasource db {
 model WeatherReading {
   id          String   @id @default(uuid()) @map("id")
   deviceId    String   @map("device_id")
-  temperature Decimal  @db.Decimal(5, 1)
-  humidity    Decimal  @db.Decimal(5, 1)
+  temperature Decimal? @db.Decimal(5, 1)
+  humidity    Decimal? @db.Decimal(5, 1)
   pressure    Decimal? @db.Decimal(6, 1)
   light       Int?
   rain        Boolean  @default(false)

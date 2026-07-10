@@ -9,6 +9,10 @@ export interface TelemetryPayload {
   mode: "AUTO" | "MANUAL";
   prediction: "SAFE" | "WARNING" | "CRITICAL";
   reason: string;
+  owmTemperature: number | null;
+  owmHumidity: number | null;
+  owmPressure: number | null;
+  pressureTrend: string;
   timestamp: string;
 }
 

@@ -25,7 +25,7 @@ export default function AboutPage() {
           { icon: Cpu, title: "ESP32 Edge Computing", desc: "Local sensor fusion and autonomous decision-making without cloud dependency" },
           { icon: Radio, title: "MQTT over TLS", desc: "Secure bidirectional communication via HiveMQ Cloud using WSS protocol" },
           { icon: Cloud, title: "Cloud Integration", desc: "Real-time telemetry streaming with automatic reconnection and state sync" },
-          { icon: Brain, title: "Intelligent Automation", desc: "Multi-factor decision engine: rain, night security, temperature limits" },
+          { icon: Brain, title: "Intelligent Automation", desc: "Multi-factor decision engine: rain, pressure drops, humidity, night security, temperature limits" },
         ].map((item, i) => (
           <motion.div
             key={item.title}

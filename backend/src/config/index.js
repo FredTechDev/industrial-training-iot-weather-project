@@ -25,6 +25,7 @@ const config = {
       events: "clothesline/events",
       system: "clothesline/system",
       alerts: "clothesline/alerts",
+      weather: "clothesline/weather",
       presence: "home/presence",
     },
     subscribeTopic: "clothesline/#",

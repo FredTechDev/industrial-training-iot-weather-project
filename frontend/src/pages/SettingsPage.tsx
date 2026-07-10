@@ -85,6 +85,7 @@ export default function SettingsPage() {
             { topic: "clothesline/status", dir: "Subscribe", desc: "Device online/offline" },
             { topic: "clothesline/events", dir: "Subscribe", desc: "System events" },
             { topic: "clothesline/system", dir: "Subscribe", desc: "System diagnostics" },
+            { topic: "clothesline/weather", dir: "Subscribe", desc: "OWM data from backend" },
             { topic: "clothesline/control", dir: "Publish", desc: "Commands to ESP32" },
             { topic: "clothesline/config", dir: "Publish", desc: "Configuration updates" },
           ].map((t) => (

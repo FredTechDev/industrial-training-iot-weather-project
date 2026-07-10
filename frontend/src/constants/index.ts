@@ -30,12 +30,12 @@ export const PRESENCE_OPTIONS = [
 ] as const;
 
 export const REASON_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  SAFE: { label: "All Parameters Normal", icon: "check-circle", color: "text-emerald-400" },
+  SAFE: { label: "All Normal", icon: "check-circle", color: "text-emerald-400" },
   RAIN: { label: "Rain Detected", icon: "cloud-rain", color: "text-blue-400" },
   STORM_PREDICTION: { label: "Storm Predicted", icon: "cloud-lightning", color: "text-purple-400" },
   HIGH_HUMIDITY: { label: "High Humidity", icon: "droplets", color: "text-cyan-400" },
   NIGHT_SECURITY: { label: "Night Security", icon: "moon", color: "text-indigo-400" },
-  TEMP_LIMIT: { label: "Temperature Limit", icon: "thermometer", color: "text-orange-400" },
+  TEMP_LIMIT: { label: "Low Temperature", icon: "thermometer", color: "text-orange-400" },
 };
 
 export const SENSOR_THRESHOLDS = {

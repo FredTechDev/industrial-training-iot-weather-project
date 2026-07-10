@@ -24,6 +24,7 @@ const char* TOPIC_EVENTS    = "clothesline/events";
 const char* TOPIC_SYSTEM    = "clothesline/system";
 const char* TOPIC_CONTROL   = "clothesline/control";
 const char* TOPIC_CONFIG    = "clothesline/config";
+const char* TOPIC_WEATHER   = "clothesline/weather";
 const char* TOPIC_PRESENCE  = "home/presence";
 
 // --- Sensor pins ---
@@ -45,6 +46,15 @@ String reason      = "SAFE";
 String prediction  = "SAFE";
 String currentModeStr = "AUTO";
 String presence    = "HOME";
+
+// --- OpenWeatherMap data (received from backend) ---
+float owmTemperature = 0.0;
+float owmHumidity    = 0.0;
+float owmPressure    = 0.0;
+String pressureTrend  = "stable";
+float pressureRate    = 0.0;
+bool  owmDataReceived = false;
+unsigned long lastOwmUpdate = 0;
 
 // --- Timing ---
 unsigned long lastPublish = 0;
@@ -189,9 +199,28 @@ void callback(char* topic, byte* payload, unsigned int length) {
       Serial.println("Config updated");
     }
   }
+
+  if (String(topic) == TOPIC_WEATHER) {
+    StaticJsonDocument<256> doc;
+    if (deserializeJson(doc, message) == DeserializationError::Ok) {
+      if (doc.containsKey("temperature")) owmTemperature = doc["temperature"];
+      if (doc.containsKey("humidity"))    owmHumidity = doc["humidity"];
+      if (doc.containsKey("pressure"))    owmPressure = doc["pressure"];
+      if (doc.containsKey("pressureTrend")) pressureTrend = doc["pressureTrend"].as<String>();
+      if (doc.containsKey("pressureRate")) pressureRate = doc["pressureRate"];
+      owmDataReceived = true;
+      lastOwmUpdate = millis();
+      publishEvent("info", "Weather data updated from OpenWeatherMap");
+      Serial.println("OWM data received");
+    }
+  }
 }
 
 void evaluateAutoMode(bool rain, int lightRaw) {
+  // Check if OWM data is fresh (within 15 minutes)
+  bool owmFresh = owmDataReceived && (millis() - lastOwmUpdate < 900000);
+
+  // Priority 1: Presence mode
   if (presence == "AWAY" || presence == "VACATION") {
     moveServo(SERVO_RETRACT);
     lineState = "RETRACTED";
@@ -199,6 +228,7 @@ void evaluateAutoMode(bool rain, int lightRaw) {
     return;
   }
 
+  // Priority 2: Actual rain (local sensor) — always wins
   if (rain) {
     moveServo(SERVO_RETRACT);
     lineState = "RETRACTED";
@@ -206,6 +236,23 @@ void evaluateAutoMode(bool rain, int lightRaw) {
     return;
   }
 
+  // Priority 3: Storm predicted — pressure dropping rapidly (OWM)
+  if (owmFresh && pressureTrend == "dropping" && pressureRate < -1.0) {
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
+    reason = "STORM_PREDICTION";
+    return;
+  }
+
+  // Priority 4: High humidity — rain likely (OWM)
+  if (owmFresh && owmHumidity > humidityHigh) {
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
+    reason = "HIGH_HUMIDITY";
+    return;
+  }
+
+  // Priority 5: Night time
   int hour = (millis() / 3600000) % 24;
   if (hour >= 22 || hour < 6) {
     moveServo(SERVO_RETRACT);
@@ -214,6 +261,7 @@ void evaluateAutoMode(bool rain, int lightRaw) {
     return;
   }
 
+  // Priority 6: Low light — night security
   if (lightRaw < nightLightThresh) {
     moveServo(SERVO_RETRACT);
     lineState = "RETRACTED";
@@ -221,6 +269,15 @@ void evaluateAutoMode(bool rain, int lightRaw) {
     return;
   }
 
+  // Priority 7: Low temperature — cold/wet conditions (OWM)
+  if (owmFresh && owmTemperature < tempLow) {
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
+    reason = "TEMP_LIMIT";
+    return;
+  }
+
+  // Priority 8: All conditions safe — extend clothesline
   moveServo(SERVO_EXTEND);
   lineState = "EXTENDED";
   reason = "SAFE";
@@ -228,6 +285,9 @@ void evaluateAutoMode(bool rain, int lightRaw) {
 
 String classifyPrediction(bool rain) {
   if (rain) return "WARNING";
+  bool owmFresh = owmDataReceived && (millis() - lastOwmUpdate < 900000);
+  if (owmFresh && pressureTrend == "dropping" && pressureRate < -1.0) return "WARNING";
+  if (owmFresh && owmHumidity > humidityHigh) return "WARNING";
   return "SAFE";
 }
 
@@ -240,18 +300,22 @@ void moveServo(int angle) {
 void publishTelemetry(bool rain, int lightRaw) {
   const char* lightState = lightRaw >= nightLightThresh ? "DAY" : "NIGHT";
 
-  StaticJsonDocument<384> doc;
-  doc["deviceId"]    = DEVICE_ID;
-  doc["rain"]        = rain;
-  doc["light"]       = lightRaw;
-  doc["lightState"]  = lightState;
-  doc["line"]        = lineState;
-  doc["mode"]        = currentModeStr;
-  doc["prediction"]  = prediction;
-  doc["reason"]      = reason;
-  doc["timestamp"]   = "";
+  StaticJsonDocument<448> doc;
+  doc["deviceId"]       = DEVICE_ID;
+  doc["rain"]           = rain;
+  doc["light"]          = lightRaw;
+  doc["lightState"]     = lightState;
+  doc["line"]           = lineState;
+  doc["mode"]           = currentModeStr;
+  doc["prediction"]     = prediction;
+  doc["reason"]         = reason;
+  doc["owmTemperature"] = owmDataReceived ? owmTemperature : nullptr;
+  doc["owmHumidity"]    = owmDataReceived ? owmHumidity : nullptr;
+  doc["owmPressure"]    = owmDataReceived ? owmPressure : nullptr;
+  doc["pressureTrend"]  = pressureTrend;
+  doc["timestamp"]      = "";
 
-  char buffer[384];
+  char buffer[448];
   size_t n = serializeJson(doc, buffer);
   mqtt.publish(TOPIC_TELEMETRY, buffer, n);
   Serial.print("Published: ");
@@ -309,8 +373,9 @@ void connectMQTT() {
       publishEvent("success", "Device connected");
       mqtt.subscribe(TOPIC_CONTROL, 1);
       mqtt.subscribe(TOPIC_CONFIG, 1);
+      mqtt.subscribe(TOPIC_WEATHER, 1);
       mqtt.subscribe(TOPIC_PRESENCE, 1);
-      Serial.println("Subscribed: clothesline/control, clothesline/config, home/presence");
+      Serial.println("Subscribed: clothesline/control, clothesline/config, clothesline/weather, home/presence");
     } else {
       Serial.print("failed (rc=");
       Serial.print(mqtt.state());

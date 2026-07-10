@@ -11,6 +11,9 @@ class MqttSubscriber {
   constructor() {
     this.client = null;
     this.connected = false;
+    this.pressureHistory = [];
+    this.lastPressure = null;
+    this.weatherInterval = null;
   }
 
   connect() {
@@ -61,6 +64,88 @@ class MqttSubscriber {
       this.connected = false;
       logger.warn("MQTT client went offline");
     });
+
+    // Start periodic OWM publisher after connection
+    this.client.on("connect", () => {
+      this.startWeatherPublisher();
+    });
+  }
+
+  startWeatherPublisher() {
+    // Publish immediately on connect
+    this.publishWeatherToEsp32();
+
+    // Then every 5 minutes
+    if (this.weatherInterval) clearInterval(this.weatherInterval);
+    this.weatherInterval = setInterval(() => {
+      this.publishWeatherToEsp32();
+    }, 5 * 60 * 1000);
+
+    logger.info("OWM weather publisher started (every 5 minutes)");
+  }
+
+  async publishWeatherToEsp32() {
+    try {
+      const apiData = await weatherApiService.getCurrentWeather();
+      if (!apiData) {
+        logger.warn("No OWM data available for ESP32 publish");
+        return;
+      }
+
+      // Track pressure history for trend computation
+      if (apiData.pressure) {
+        this.pressureHistory.push({
+          pressure: apiData.pressure,
+          time: Date.now(),
+        });
+        // Keep last 12 readings (1 hour at 5min intervals)
+        if (this.pressureHistory.length > 12) {
+          this.pressureHistory.shift();
+        }
+      }
+
+      // Compute pressure trend
+      let pressureTrend = "stable";
+      let pressureRate = 0;
+      if (this.pressureHistory.length >= 2) {
+        const oldest = this.pressureHistory[0];
+        const newest = this.pressureHistory[this.pressureHistory.length - 1];
+        const timeDiffHours = (newest.time - oldest.time) / (1000 * 60 * 60);
+        if (timeDiffHours > 0) {
+          pressureRate = (newest.pressure - oldest.pressure) / timeDiffHours;
+          if (pressureRate < -1.0) pressureTrend = "dropping";
+          else if (pressureRate > 1.0) pressureTrend = "rising";
+        }
+      }
+
+      // Publish to ESP32
+      const weatherPayload = {
+        temperature: apiData.temperature,
+        humidity: apiData.humidity,
+        pressure: apiData.pressure,
+        description: apiData.description || "",
+        pressureTrend,
+        pressureRate: Math.round(pressureRate * 100) / 100,
+        fetchedAt: new Date().toISOString(),
+      };
+
+      if (this.client && this.connected) {
+        this.client.publish(
+          config.mqtt.topics.weather,
+          JSON.stringify(weatherPayload),
+          { qos: 1 }
+        );
+        logger.info("Published weather data to ESP32", {
+          temp: weatherPayload.temperature,
+          humidity: weatherPayload.humidity,
+          pressure: weatherPayload.pressure,
+          trend: pressureTrend,
+          rate: pressureRate,
+        });
+      }
+    } catch (err) {
+      logger.error("Failed to publish weather to ESP32", { error: err.message });
+    }
   }
 
   async handleMessage(topic, payload) {
@@ -117,6 +202,10 @@ class MqttSubscriber {
       light: typeof data.light === "number" ? data.light : null,
       lightState: data.lightState || (typeof data.light === "string" ? data.light : null),
       rain: typeof data.rain === "boolean" ? data.rain : null,
+      owmTemperature: data.owmTemperature ?? null,
+      owmHumidity: data.owmHumidity ?? null,
+      owmPressure: data.owmPressure ?? null,
+      pressureTrend: data.pressureTrend || "stable",
     };
 
     const validation = validateSensorReading(reading);
@@ -129,7 +218,7 @@ class MqttSubscriber {
     const saved = await weatherService.saveReading(sanitized);
     if (!saved) return;
 
-    const broadcast = { ...saved, lightState: reading.lightState };
+    const broadcast = { ...saved, lightState: reading.lightState, owmTemperature: reading.owmTemperature, owmHumidity: reading.owmHumidity, owmPressure: reading.owmPressure, pressureTrend: reading.pressureTrend };
 
     // Broadcast to any Socket.IO clients (legacy pages)
     socketService.broadcast("weather:reading", broadcast);
@@ -188,6 +277,7 @@ class MqttSubscriber {
   }
 
   disconnect() {
+    if (this.weatherInterval) clearInterval(this.weatherInterval);
     if (this.client) {
       this.client.end(true);
     }

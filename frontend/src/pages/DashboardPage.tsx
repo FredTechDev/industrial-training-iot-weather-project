@@ -5,7 +5,7 @@ import ClotheslineAnimation from "../components/clothesline/ClotheslineAnimation
 import StatusBadge from "../components/common/StatusBadge";
 import { REASON_LABELS, THREAT_COLORS } from "../constants";
 import { formatDuration } from "../utils/format";
-import { Signal, Wifi, Radio, Clock, Cpu } from "lucide-react";
+import { Signal, Wifi, Radio, Clock, Cpu, Thermometer, Droplets, Gauge, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import PresenceSelector from "../components/presence/PresenceSelector";
 
 export default function DashboardPage() {
@@ -120,6 +120,57 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Weather Conditions from OpenWeatherMap */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="bg-gray-900 rounded-2xl p-5 border border-gray-800"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-300">Weather Conditions (OpenWeatherMap)</h3>
+          {telemetry?.pressureTrend && (
+            <div className={`flex items-center gap-1 text-xs font-medium ${
+              telemetry.pressureTrend === "dropping" ? "text-red-400" :
+              telemetry.pressureTrend === "rising" ? "text-emerald-400" : "text-gray-400"
+            }`}>
+              {telemetry.pressureTrend === "dropping" ? <TrendingDown size={12} /> :
+               telemetry.pressureTrend === "rising" ? <TrendingUp size={12} /> : <Minus size={12} />}
+              Pressure {telemetry.pressureTrend}
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <Thermometer size={14} className="text-orange-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Temperature</p>
+              <p className="text-sm font-medium text-white">{telemetry?.owmTemperature ?? "--"}°C</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Droplets size={14} className="text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Humidity</p>
+              <p className="text-sm font-medium text-white">{telemetry?.owmHumidity ?? "--"}%</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+              <Gauge size={14} className="text-purple-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Pressure</p>
+              <p className="text-sm font-medium text-white">{telemetry?.owmPressure ?? "--"} hPa</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

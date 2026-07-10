@@ -45,8 +45,8 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 ## How It Works
 
 **ESP32** handles: rain detection, light level, servo control for clothesline
-**OpenWeatherMap** provides: temperature, humidity, atmospheric pressure
-**Backend** merges both data sources and stores unified readings
+**OpenWeatherMap** provides: temperature, humidity, atmospheric pressure (every 5 min via MQTT to ESP32)
+**Backend** merges both data sources, publishes OWM data to ESP32 for predictive actuation
 **Frontend** displays real-time dashboard with rule-based clothesline automation
 
 ## Technology Stack
@@ -57,7 +57,7 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 | **Communication** | MQTT over TLS (HiveMQ Cloud) |
 | **Backend** | Node.js, Express, Socket.IO, MQTT.js |
 | **Database** | PostgreSQL (Supabase), Prisma ORM |
-| **Weather API** | OpenWeatherMap (free tier) |
+| **Weather API** | OpenWeatherMap (free tier) — predictive rain detection |
 | **Frontend** | React 18, TypeScript, Vite, Recharts, Tailwind CSS |
 | **DevOps** | Docker, Docker Compose |
 
@@ -105,13 +105,13 @@ docker compose up --build
 ## Data Collection Flow
 
 ```
-ESP32 (Physical Hardware)
-  │
-  │  Reads rain sensor and light sensor every 15 seconds
-  │  Publishes JSON payload to MQTT
-  │
-  ▼
-HiveMQ Cloud (MQTT Broker)
+ESP32 (Physical Hardware)                    Backend (Node.js)
+  │                                            │
+  │  Reads rain + light sensors every 15s      │  Fetches OpenWeatherMap every 5min
+  │  Publishes JSON payload to MQTT            │  Publishes OWM data to ESP32
+  │                                            │
+  ▼                                            ▼
+HiveMQ Cloud (MQTT Broker) ◄───────────────────┘
   │
   ▼
 Node.js Backend
@@ -124,6 +124,7 @@ Node.js Backend
   │  6. Broadcasts to dashboard via Socket.IO
   │  7. Computes trends (30min, 1hr, 6hr)
   │  8. Evaluates alert conditions
+  │  9. Publishes OWM data to ESP32 for predictive actuation
   │
   ▼
 React Dashboard
@@ -135,15 +136,18 @@ React Dashboard
 
 ## Clothesline Automation Rules (ESP32)
 
-The ESP32 automatically controls the clothesline based on:
+The ESP32 automatically controls the clothesline based on local sensors + OpenWeatherMap data:
 
-| Condition | Action | Reason |
-|-----------|--------|--------|
-| Rain detected | Retract (0°) | Protect clothes from rain |
-| Night time (22:00-06:00) | Retract (0°) | Security |
-| Low light level | Retract (0°) | Night security |
-| Away/Vacation mode | Retract (0°) | Security |
-| All conditions safe + sunlight | Extend (90°) | Optimize drying |
+| Priority | Condition | Action | Reason |
+|----------|-----------|--------|--------|
+| 1 | Away/Vacation mode | Retract (0°) | Security |
+| 2 | Rain detected (local sensor) | Retract (0°) | Rain |
+| 3 | Pressure dropping rapidly (OWM) | Retract (0°) | Storm predicted |
+| 4 | High humidity > 80% (OWM) | Retract (0°) | Rain likely |
+| 5 | Night time (22:00-06:00) | Retract (0°) | Security |
+| 6 | Low light level | Retract (0°) | Night security |
+| 7 | Low temperature < 18°C (OWM) | Retract (0°) | Cold/wet conditions |
+| 8 | All conditions safe | Extend (90°) | Optimize drying |
 
 ## REST API
 

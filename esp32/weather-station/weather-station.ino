@@ -18,12 +18,12 @@ const char* MQTT_PASS = "Fred1234";
 const char* DEVICE_ID = "station-001";
 
 // --- MQTT Topics (aligned with frontend) ---
-const char* TOPIC_TELEMETRY = "window/telemetry";
-const char* TOPIC_STATUS    = "window/status";
-const char* TOPIC_EVENTS    = "window/events";
-const char* TOPIC_SYSTEM    = "window/system";
-const char* TOPIC_CONTROL   = "window/control";
-const char* TOPIC_CONFIG    = "window/config";
+const char* TOPIC_TELEMETRY = "clothesline/telemetry";
+const char* TOPIC_STATUS    = "clothesline/status";
+const char* TOPIC_EVENTS    = "clothesline/events";
+const char* TOPIC_SYSTEM    = "clothesline/system";
+const char* TOPIC_CONTROL   = "clothesline/control";
+const char* TOPIC_CONFIG    = "clothesline/config";
 const char* TOPIC_PRESENCE  = "home/presence";
 
 // --- Sensor pins ---
@@ -32,15 +32,15 @@ const char* TOPIC_PRESENCE  = "home/presence";
 #define SERVO_PIN 13
 
 // --- Servo ---
-Servo windowServo;
-const int SERVO_OPEN   = 90;
-const int SERVO_CLOSED = 0;
+Servo lineServo;
+const int SERVO_EXTEND  = 90;
+const int SERVO_RETRACT = 0;
 
 // --- State ---
-enum AutomationMode { MODE_AUTO, MODE_FORCE_CLOSE, MODE_FORCE_OPEN, MODE_STOPPED };
+enum AutomationMode { MODE_AUTO, MODE_FORCE_RETRACT, MODE_FORCE_EXTEND, MODE_STOPPED };
 AutomationMode currentMode = MODE_AUTO;
 
-String windowState = "CLOSED";
+String lineState    = "RETRACTED";
 String reason      = "SAFE";
 String prediction  = "SAFE";
 String currentModeStr = "AUTO";
@@ -82,8 +82,8 @@ void setup() {
   pinMode(RAIN_SENSOR_PIN, INPUT);
   pinMode(LIGHT_SENSOR_PIN, INPUT);
 
-  windowServo.attach(SERVO_PIN);
-  windowServo.write(SERVO_CLOSED);
+  lineServo.attach(SERVO_PIN);
+  lineServo.write(SERVO_RETRACT);
 
   connectWiFi();
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
@@ -134,22 +134,22 @@ void callback(char* topic, byte* payload, unsigned int length) {
       reason = "SAFE";
       publishEvent("success", "Automation resumed");
       Serial.println("Mode: AUTO");
-    } else if (strcmp(message, "FORCE_CLOSE") == 0) {
-      currentMode = MODE_FORCE_CLOSE;
+    } else if (strcmp(message, "FORCE_RETRACT") == 0) {
+      currentMode = MODE_FORCE_RETRACT;
       currentModeStr = "MANUAL";
-      moveServo(SERVO_CLOSED);
-      windowState = "CLOSED";
+      moveServo(SERVO_RETRACT);
+      lineState = "RETRACTED";
       reason = "SAFE";
-      publishEvent("info", "Window force closed by remote command");
-      Serial.println("Mode: FORCE_CLOSE");
-    } else if (strcmp(message, "FORCE_OPEN") == 0) {
-      currentMode = MODE_FORCE_OPEN;
+      publishEvent("info", "Clothesline retracted by remote command");
+      Serial.println("Mode: FORCE_RETRACT");
+    } else if (strcmp(message, "FORCE_EXTEND") == 0) {
+      currentMode = MODE_FORCE_EXTEND;
       currentModeStr = "MANUAL";
-      moveServo(SERVO_OPEN);
-      windowState = "OPEN";
+      moveServo(SERVO_EXTEND);
+      lineState = "EXTENDED";
       reason = "SAFE";
-      publishEvent("info", "Window force opened by remote command");
-      Serial.println("Mode: FORCE_OPEN");
+      publishEvent("info", "Clothesline extended by remote command");
+      Serial.println("Mode: FORCE_EXTEND");
     } else if (strcmp(message, "STOP_AUTOMATION") == 0) {
       currentMode = MODE_STOPPED;
       currentModeStr = "MANUAL";
@@ -193,36 +193,36 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void evaluateAutoMode(bool rain, int lightRaw) {
   if (presence == "AWAY" || presence == "VACATION") {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
     reason = (presence == "VACATION") ? "NIGHT_SECURITY" : "STORM_PREDICTION";
     return;
   }
 
   if (rain) {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
     reason = "RAIN";
     return;
   }
 
   int hour = (millis() / 3600000) % 24;
   if (hour >= 22 || hour < 6) {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
     reason = "NIGHT_SECURITY";
     return;
   }
 
   if (lightRaw < nightLightThresh) {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
+    moveServo(SERVO_RETRACT);
+    lineState = "RETRACTED";
     reason = "NIGHT_SECURITY";
     return;
   }
 
-  moveServo(SERVO_OPEN);
-  windowState = "OPEN";
+  moveServo(SERVO_EXTEND);
+  lineState = "EXTENDED";
   reason = "SAFE";
 }
 
@@ -232,7 +232,7 @@ String classifyPrediction(bool rain) {
 }
 
 void moveServo(int angle) {
-  windowServo.write(angle);
+  lineServo.write(angle);
   Serial.print("Servo → ");
   Serial.println(angle);
 }
@@ -245,7 +245,7 @@ void publishTelemetry(bool rain, int lightRaw) {
   doc["rain"]        = rain;
   doc["light"]       = lightRaw;
   doc["lightState"]  = lightState;
-  doc["window"]      = windowState;
+  doc["line"]        = lineState;
   doc["mode"]        = currentModeStr;
   doc["prediction"]  = prediction;
   doc["reason"]      = reason;
@@ -310,7 +310,7 @@ void connectMQTT() {
       mqtt.subscribe(TOPIC_CONTROL, 1);
       mqtt.subscribe(TOPIC_CONFIG, 1);
       mqtt.subscribe(TOPIC_PRESENCE, 1);
-      Serial.println("Subscribed: window/control, window/config, home/presence");
+      Serial.println("Subscribed: clothesline/control, clothesline/config, home/presence");
     } else {
       Serial.print("failed (rc=");
       Serial.print(mqtt.state());

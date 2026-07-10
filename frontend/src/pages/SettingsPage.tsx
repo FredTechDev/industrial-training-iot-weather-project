@@ -30,9 +30,9 @@ export default function SettingsPage() {
   };
 
   const fields = [
-    { key: "tempHigh" as const, label: "High Temperature Threshold", unit: "°C", desc: "Window closes above this" },
-    { key: "tempLow" as const, label: "Low Temperature Threshold", unit: "°C", desc: "Window closes below this" },
-    { key: "humidityHigh" as const, label: "Humidity Threshold", unit: "%", desc: "Window closes above this" },
+    { key: "tempHigh" as const, label: "High Temperature Threshold", unit: "°C", desc: "Line retracts above this" },
+    { key: "tempLow" as const, label: "Low Temperature Threshold", unit: "°C", desc: "Line retracts below this" },
+    { key: "humidityHigh" as const, label: "Humidity Threshold", unit: "%", desc: "Line retracts above this" },
     { key: "nightLightThreshold" as const, label: "Night Light Threshold", unit: "ADC", desc: "Night security trigger" },
     { key: "telemetryInterval" as const, label: "Telemetry Interval", unit: "sec", desc: "ESP32 publish rate" },
   ];
@@ -81,12 +81,12 @@ export default function SettingsPage() {
         <h3 className="text-lg font-semibold mb-4">MQTT Topics</h3>
         <div className="space-y-2">
           {[
-            { topic: "window/telemetry", dir: "Subscribe", desc: "Sensor data from ESP32" },
-            { topic: "window/status", dir: "Subscribe", desc: "Device online/offline" },
-            { topic: "window/events", dir: "Subscribe", desc: "System events" },
-            { topic: "window/system", dir: "Subscribe", desc: "System diagnostics" },
-            { topic: "window/control", dir: "Publish", desc: "Commands to ESP32" },
-            { topic: "window/config", dir: "Publish", desc: "Configuration updates" },
+            { topic: "clothesline/telemetry", dir: "Subscribe", desc: "Sensor data from ESP32" },
+            { topic: "clothesline/status", dir: "Subscribe", desc: "Device online/offline" },
+            { topic: "clothesline/events", dir: "Subscribe", desc: "System events" },
+            { topic: "clothesline/system", dir: "Subscribe", desc: "System diagnostics" },
+            { topic: "clothesline/control", dir: "Publish", desc: "Commands to ESP32" },
+            { topic: "clothesline/config", dir: "Publish", desc: "Configuration updates" },
           ].map((t) => (
             <div key={t.topic} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
               <div>

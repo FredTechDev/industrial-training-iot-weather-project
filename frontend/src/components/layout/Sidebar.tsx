@@ -40,7 +40,7 @@ export default function Sidebar() {
               <LayoutDashboard size={16} className="text-white" />
             </div>
             <div>
-              <p className="text-white text-sm font-bold leading-tight">SmartWindow</p>
+              <p className="text-white text-sm font-bold leading-tight">SmartLine</p>
               <p className="text-gray-500 text-[10px]">IoT Control System</p>
             </div>
           </div>

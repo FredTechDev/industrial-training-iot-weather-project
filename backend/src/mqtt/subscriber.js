@@ -148,9 +148,9 @@ class MqttSubscriber {
 
   handleControlCommand(data) {
     const command = typeof data === "string" ? data : data?.command;
-    if (["AUTO", "FORCE_CLOSE", "FORCE_OPEN", "STOP_AUTOMATION", "RESTART_DEVICE", "PING_DEVICE"].includes(command)) {
+    if (["AUTO", "FORCE_RETRACT", "FORCE_EXTEND", "STOP_AUTOMATION", "RESTART_DEVICE", "PING_DEVICE"].includes(command)) {
       logger.info(`Control command: ${command}`);
-      socketService.broadcast("window:command", { command, timestamp: new Date().toISOString() });
+      socketService.broadcast("line:command", { command, timestamp: new Date().toISOString() });
     } else {
       logger.warn("Invalid control command", { data });
     }
@@ -160,22 +160,22 @@ class MqttSubscriber {
     const deviceId = data.deviceId || "station-001";
     logger.info("Device status", { deviceId, online: data.online, uptime: data.uptime });
     await weatherService.updateDeviceStatus(deviceId, data.online ? "online" : "offline");
-    socketService.broadcast("window:status", data);
+    socketService.broadcast("line:status", data);
   }
 
   handleEvent(data) {
     logger.info("Device event", { type: data.type, message: data.message });
-    socketService.broadcast("window:event", data);
+    socketService.broadcast("line:event", data);
   }
 
   handlePresence(data) {
     logger.info("Presence update", { mode: data.mode, user: data.user });
-    socketService.broadcast("window:presence", data);
+    socketService.broadcast("line:presence", data);
   }
 
   async handleSystemMessage(data) {
     logger.info("System message", { data });
-    socketService.broadcast("window:system", data);
+    socketService.broadcast("line:system", data);
   }
 
   publishAlert(severity, title, message) {

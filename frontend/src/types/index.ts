@@ -5,7 +5,7 @@ export interface TelemetryPayload {
   light: number | null;
   lightState: "DAY" | "NIGHT" | null;
   rain: boolean | null;
-  window: "OPEN" | "CLOSED";
+  line: "EXTENDED" | "RETRACTED";
   mode: "AUTO" | "MANUAL";
   prediction: "SAFE" | "WARNING" | "CRITICAL";
   reason: string;
@@ -39,7 +39,7 @@ export interface DeviceConfig {
   telemetryInterval: number;
 }
 
-export type WindowMode = "AUTO" | "FORCE_OPEN" | "FORCE_CLOSE" | "STOP_AUTOMATION" | "RESTART_DEVICE" | "PING_DEVICE";
+export type LineMode = "AUTO" | "FORCE_EXTEND" | "FORCE_RETRACT" | "STOP_AUTOMATION" | "RESTART_DEVICE" | "PING_DEVICE";
 
 export type ThreatLevel = "SAFE" | "WARNING" | "CRITICAL";
 

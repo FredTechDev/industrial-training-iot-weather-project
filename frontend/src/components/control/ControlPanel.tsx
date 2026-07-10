@@ -10,8 +10,8 @@ import {
 
 const buttons = [
   { cmd: MQTT_COMMANDS.AUTO, label: "Auto Mode", icon: Bot, color: "bg-blue-600 hover:bg-blue-500", needsConfirm: false },
-  { cmd: MQTT_COMMANDS.FORCE_OPEN, label: "Force Open", icon: Unlock, color: "bg-emerald-600 hover:bg-emerald-500", needsConfirm: false },
-  { cmd: MQTT_COMMANDS.FORCE_CLOSE, label: "Force Close", icon: Lock, color: "bg-amber-600 hover:bg-amber-500", needsConfirm: false },
+  { cmd: MQTT_COMMANDS.FORCE_EXTEND, label: "Force Extend", icon: Unlock, color: "bg-emerald-600 hover:bg-emerald-500", needsConfirm: false },
+  { cmd: MQTT_COMMANDS.FORCE_RETRACT, label: "Force Retract", icon: Lock, color: "bg-amber-600 hover:bg-amber-500", needsConfirm: false },
   { cmd: MQTT_COMMANDS.STOP_AUTOMATION, label: "Stop Auto", icon: OctagonAlert, color: "bg-orange-600 hover:bg-orange-500", needsConfirm: true },
   { cmd: MQTT_COMMANDS.RESTART_DEVICE, label: "Reboot", icon: RotateCcw, color: "bg-purple-600 hover:bg-purple-500", needsConfirm: true },
   { cmd: MQTT_COMMANDS.PING_DEVICE, label: "Ping", icon: Signal, color: "bg-cyan-600 hover:bg-cyan-500", needsConfirm: false },
@@ -22,7 +22,7 @@ export default function ControlPanel({ compact = false }: { compact?: boolean })
   const commandHistory = useAppStore((s) => s.commandHistory);
 
   const handleEmergency = () => {
-    send(MQTT_COMMANDS.FORCE_CLOSE, "Emergency Close", true);
+    send(MQTT_COMMANDS.FORCE_RETRACT, "Emergency Retract", true);
   };
 
   return (
@@ -51,7 +51,7 @@ export default function ControlPanel({ compact = false }: { compact?: boolean })
         className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition-colors disabled:opacity-40"
       >
         <ShieldAlert size={18} />
-        Emergency Close Window
+        Emergency Retract Line
       </motion.button>
 
       {commandHistory.length > 0 && (

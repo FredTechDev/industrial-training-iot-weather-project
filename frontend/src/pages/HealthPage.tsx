@@ -73,7 +73,7 @@ export default function HealthPage() {
                 { label: "DHT22", desc: "Temperature & Humidity", status: "active" },
                 { label: "YL-83", desc: "Rain Detection", status: telemetry?.rain ? "alert" : "active" },
                 { label: "LDR", desc: "Light Sensor", status: "active" },
-                { label: "Servo SG90", desc: "Window Actuator", status: "active" },
+                { label: "Servo SG90", desc: "Clothesline Actuator", status: "active" },
               ].map((sensor) => (
                 <div key={sensor.label} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
                   <div>

@@ -1,6 +1,6 @@
-# Smart Climate-Responsive IoT Window Management System
+# Smart Climate-Responsive IoT Clothesline Management System
 
-A production-quality academic project demonstrating an end-to-end IoT solution for automated window management based on real-time environmental conditions from ESP32 sensors and OpenWeatherMap API.
+A production-quality academic project demonstrating an end-to-end IoT solution for automated clothesline management based on real-time environmental conditions from ESP32 sensors and OpenWeatherMap API.
 
 ## System Architecture
 
@@ -12,7 +12,7 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
                           Reads Sensors Every 15s
                                       │
                                       ▼
-                            MQTT Publish (window/telemetry)
+                             MQTT Publish (clothesline/telemetry)
                                       │
                                       ▼
                         HiveMQ Cloud (MQTT Broker)
@@ -44,10 +44,10 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 
 ## How It Works
 
-**ESP32** handles: rain detection, light level, servo control
+**ESP32** handles: rain detection, light level, servo control for clothesline
 **OpenWeatherMap** provides: temperature, humidity, atmospheric pressure
 **Backend** merges both data sources and stores unified readings
-**Frontend** displays real-time dashboard with rule-based window automation
+**Frontend** displays real-time dashboard with rule-based clothesline automation
 
 ## Technology Stack
 
@@ -68,7 +68,7 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 | ESP32 NodeMCU | Main controller, WiFi + MQTT | Built-in |
 | YL-83 | Rain Detection | Digital (GPIO35) |
 | LDR | Ambient Light | Analog (GPIO34) |
-| Servo Motor | Window Open/Close | PWM (GPIO13) |
+| Servo Motor | Clothesline Extend/Retract | PWM (GPIO13) |
 
 ## Quick Start
 
@@ -130,20 +130,20 @@ React Dashboard
   │
   │  Real-time updates via WebSocket
   │  Live charts, sensor gauges, alerts
-  │  Manual window control (force open/close)
+  │  Manual clothesline control (force extend/retract)
 ```
 
-## Window Automation Rules (ESP32)
+## Clothesline Automation Rules (ESP32)
 
-The ESP32 automatically controls the window based on:
+The ESP32 automatically controls the clothesline based on:
 
 | Condition | Action | Reason |
 |-----------|--------|--------|
-| Rain detected | Close | Prevent water damage |
-| Night time (22:00-06:00) | Close | Security |
-| Low light level | Close | Night security |
-| Away/Vacation mode | Close | Security |
-| All conditions safe | Open | Ventilation |
+| Rain detected | Retract (0°) | Protect clothes from rain |
+| Night time (22:00-06:00) | Retract (0°) | Security |
+| Low light level | Retract (0°) | Night security |
+| Away/Vacation mode | Retract (0°) | Security |
+| All conditions safe + sunlight | Extend (90°) | Optimize drying |
 
 ## REST API
 

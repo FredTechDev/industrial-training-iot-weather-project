@@ -6,16 +6,16 @@ export default function AboutPage() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold">About</h1>
-        <p className="text-gray-400 text-sm">Smart Climate-Responsive IoT Window Management System</p>
+        <p className="text-gray-400 text-sm">Smart Climate-Responsive IoT Clothesline Management System</p>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
         <h2 className="text-lg font-semibold mb-3">Project Objectives</h2>
         <p className="text-gray-300 text-sm leading-relaxed">
-          This system automatically manages window positioning based on real-time environmental analysis.
+          This system automatically manages clothesline positioning based on real-time environmental analysis.
           An ESP32 microcontroller monitors temperature, humidity, rain, and light levels.
-          Using edge computing, it decides whether the window should open or close
-          to maintain comfort, safety, and security. The dashboard serves as a remote command center,
+          Using edge computing, it decides whether the clothesline should extend or retract
+          to optimize drying while protecting from rain. The dashboard serves as a remote command center,
           enabling real-time monitoring and manual override via MQTT.
         </p>
       </motion.div>
@@ -50,7 +50,7 @@ export default function AboutPage() {
             { name: "DHT22", purpose: "Temperature & Humidity" },
             { name: "YL-83", purpose: "Rain Detection" },
             { name: "LDR", purpose: "Light Intensity" },
-            { name: "SG90 Servo", purpose: "Window Actuator" },
+            { name: "SG90 Servo", purpose: "Clothesline Actuator" },
           ].map((s) => (
             <div key={s.name} className="bg-gray-800 rounded-lg p-3">
               <p className="text-white text-sm font-medium">{s.name}</p>

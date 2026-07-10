@@ -1,17 +1,17 @@
 export const MQTT_TOPICS = {
-  TELEMETRY: "window/telemetry",
-  STATUS: "window/status",
-  EVENTS: "window/events",
-  SYSTEM: "window/system",
-  CONTROL: "window/control",
-  CONFIG: "window/config",
+  TELEMETRY: "clothesline/telemetry",
+  STATUS: "clothesline/status",
+  EVENTS: "clothesline/events",
+  SYSTEM: "clothesline/system",
+  CONTROL: "clothesline/control",
+  CONFIG: "clothesline/config",
   PRESENCE: "home/presence",
 } as const;
 
 export const MQTT_COMMANDS = {
   AUTO: "AUTO",
-  FORCE_OPEN: "FORCE_OPEN",
-  FORCE_CLOSE: "FORCE_CLOSE",
+  FORCE_EXTEND: "FORCE_EXTEND",
+  FORCE_RETRACT: "FORCE_RETRACT",
   STOP_AUTOMATION: "STOP_AUTOMATION",
   RESTART_DEVICE: "RESTART_DEVICE",
   PING_DEVICE: "PING_DEVICE",
@@ -24,9 +24,9 @@ export const THREAT_COLORS: Record<string, string> = {
 };
 
 export const PRESENCE_OPTIONS = [
-  { value: "HOME" as const, label: "Home", icon: "House", color: "bg-emerald-600 hover:bg-emerald-500", description: "Window automation active — system manages comfort" },
-  { value: "AWAY" as const, label: "Away", icon: "DoorOpen", color: "bg-amber-600 hover:bg-amber-500", description: "Window secured — all openings closed for security" },
-  { value: "VACATION" as const, label: "Vacation", icon: "Plane", color: "bg-purple-600 hover:bg-purple-500", description: "Extended lockdown — window stays closed until you return" },
+  { value: "HOME" as const, label: "Home", icon: "House", color: "bg-emerald-600 hover:bg-emerald-500", description: "Automation active — system manages clothesline based on weather" },
+  { value: "AWAY" as const, label: "Away", icon: "DoorOpen", color: "bg-amber-600 hover:bg-amber-500", description: "Clothesline retracted — secured while you're away" },
+  { value: "VACATION" as const, label: "Vacation", icon: "Plane", color: "bg-purple-600 hover:bg-purple-500", description: "Extended lockdown — clothesline stays retracted until you return" },
 ] as const;
 
 export const REASON_LABELS: Record<string, { label: string; icon: string; color: string }> = {

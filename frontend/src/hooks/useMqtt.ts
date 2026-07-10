@@ -16,7 +16,7 @@ export function useMqtt() {
         addEvent({
           id: crypto.randomUUID(),
           type: t.rain ? "warning" : "info",
-          message: t.rain ? "Rain detected — window may close" : `Telemetry: ${t.temperature}°C, ${t.humidity}%`,
+          message: t.rain ? "Rain detected — clothesline retracting" : `Telemetry: ${t.temperature}°C, ${t.humidity}%`,
           timestamp: t.timestamp || new Date().toISOString(),
         });
       }),

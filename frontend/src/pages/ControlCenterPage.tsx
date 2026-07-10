@@ -11,7 +11,7 @@ export default function ControlCenterPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Control Center</h1>
-        <p className="text-gray-400 text-sm">Send remote commands to the ESP32 window controller</p>
+        <p className="text-gray-400 text-sm">Send remote commands to the ESP32 clothesline controller</p>
       </div>
 
       <motion.div
@@ -27,7 +27,7 @@ export default function ControlCenterPage() {
         <div className="mb-6 p-4 bg-gray-800/50 rounded-xl">
           <p className="text-xs text-gray-500 mb-2">Current Device State</p>
           <div className="flex flex-wrap gap-2">
-            <StatusBadge status={telemetry?.window || "CLOSED"} pulse />
+            <StatusBadge status={telemetry?.line || "RETRACTED"} pulse />
             <StatusBadge status={telemetry?.mode || "AUTO"} />
             <StatusBadge status={telemetry?.prediction || "SAFE"} />
           </div>

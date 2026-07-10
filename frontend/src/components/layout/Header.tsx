@@ -23,7 +23,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {telemetry && (
           <>
-            <StatusBadge status={telemetry.window} pulse />
+            <StatusBadge status={telemetry.line} pulse />
             <StatusBadge status={telemetry.mode} />
             <StatusBadge status={telemetry.prediction} />
           </>

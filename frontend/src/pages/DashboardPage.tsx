@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useAppStore } from "../stores/useAppStore";
 import { useTelemetry } from "../hooks/useTelemetry";
-import WindowAnimation from "../components/window/WindowAnimation";
+import ClotheslineAnimation from "../components/clothesline/ClotheslineAnimation";
 import StatusBadge from "../components/common/StatusBadge";
 import { REASON_LABELS, THREAT_COLORS } from "../constants";
 import { formatDuration } from "../utils/format";
@@ -16,7 +16,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-400 text-sm">Real-time window management overview</p>
+        <p className="text-gray-400 text-sm">Real-time clothesline management overview</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -27,11 +27,11 @@ export default function DashboardPage() {
           className="lg:col-span-2 bg-gray-900 rounded-2xl p-6 border border-gray-800"
         >
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Window visualization */}
+            {/* Clothesline visualization */}
             <div className="flex flex-col items-center gap-4">
-              <WindowAnimation isOpen={telemetry?.window === "OPEN"} />
+              <ClotheslineAnimation isExtended={telemetry?.line === "EXTENDED"} />
               <div className="mt-6">
-                <StatusBadge status={telemetry?.window || "CLOSED"} pulse />
+                <StatusBadge status={telemetry?.line || "RETRACTED"} pulse />
               </div>
             </div>
 

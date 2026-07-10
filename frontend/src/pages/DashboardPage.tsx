@@ -3,7 +3,6 @@ import { useAppStore } from "../stores/useAppStore";
 import { useTelemetry } from "../hooks/useTelemetry";
 import WindowAnimation from "../components/window/WindowAnimation";
 import StatusBadge from "../components/common/StatusBadge";
-import BatteryIndicator from "../components/common/BatteryIndicator";
 import { REASON_LABELS, THREAT_COLORS } from "../constants";
 import { formatDuration } from "../utils/format";
 import { Signal, Wifi, Radio, Clock, Cpu } from "lucide-react";
@@ -96,12 +95,6 @@ export default function DashboardPage() {
           {/* Presence Mode */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <PresenceSelector />
-          </motion.div>
-
-          {/* Battery */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-xs text-gray-500 mb-3">System Battery</p>
-            <BatteryIndicator level={telemetry?.battery ?? 0} size="lg" />
           </motion.div>
 
           {/* Timestamps */}

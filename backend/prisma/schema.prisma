@@ -15,7 +15,6 @@ model WeatherReading {
   pressure    Decimal? @db.Decimal(6, 1)
   light       Int?
   rain        Boolean  @default(false)
-  battery     Decimal? @db.Decimal(5, 1)
   recordedAt  DateTime @default(now()) @map("recorded_at") @db.Timestamptz()
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
 

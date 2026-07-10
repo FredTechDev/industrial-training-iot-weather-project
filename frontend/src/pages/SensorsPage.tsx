@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useTelemetry } from "../hooks/useTelemetry";
 import Gauge from "../components/common/Gauge";
-import BatteryIndicator from "../components/common/BatteryIndicator";
 import StatusBadge from "../components/common/StatusBadge";
 import { SENSOR_THRESHOLDS } from "../constants";
 import { CloudRain, Sun, Moon, Thermometer, Droplets, Gauge } from "lucide-react";
@@ -28,7 +27,7 @@ function SensorCard({ title, icon: Icon, children, delay = 0 }: {
 }
 
 export default function SensorsPage() {
-  const { telemetry, tempLevel, humidityLevel, pressureLevel, batteryLevel } = useTelemetry();
+  const { telemetry, tempLevel, humidityLevel, pressureLevel } = useTelemetry();
 
   return (
     <div className="space-y-6">
@@ -37,7 +36,7 @@ export default function SensorsPage() {
         <p className="text-gray-400 text-sm">Real-time environmental readings from ESP32</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Temperature */}
         <SensorCard title="Temperature" icon={Thermometer} delay={0}>
           <div className="flex justify-center">
@@ -133,16 +132,6 @@ export default function SensorsPage() {
               status={telemetry?.lightState || "DAY"}
               color={telemetry?.lightState === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
             />
-          </div>
-        </SensorCard>
-
-        {/* Battery */}
-        <SensorCard title="Battery" icon={Thermometer} delay={0.25}>
-          <div className="flex flex-col items-center gap-4 py-4">
-            <BatteryIndicator level={telemetry?.battery ?? 0} size="lg" />
-            {batteryLevel === "danger" && (
-              <p className="text-red-400 text-xs font-medium animate-pulse">⚠ Low — Emergency safe-close may trigger</p>
-            )}
           </div>
         </SensorCard>
       </div>

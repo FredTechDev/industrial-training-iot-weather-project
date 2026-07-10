@@ -31,7 +31,6 @@ class WeatherService {
           pressure: reading.pressure,
           light: reading.light,
           rain: reading.rain,
-          battery: reading.battery,
           recordedAt: reading.recordedAt,
         },
       });

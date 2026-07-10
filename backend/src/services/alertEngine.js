@@ -21,9 +21,6 @@ class AlertEngine {
       const heavyRain = this.checkHeavyRain(reading);
       if (heavyRain) alerts.push(heavyRain);
 
-      const lowBattery = this.checkLowBattery(reading);
-      if (lowBattery) alerts.push(lowBattery);
-
       const extremeLight = this.checkExtremeLight(reading);
       if (extremeLight) alerts.push(extremeLight);
 
@@ -115,25 +112,6 @@ class AlertEngine {
         severity: "info",
         title: "Rain Detected",
         message: "Rainfall detected at sensor station.",
-      };
-    }
-    return null;
-  }
-
-  checkLowBattery(reading) {
-    const battery = Number(reading.battery);
-    if (battery < 10) {
-      return {
-        severity: "critical",
-        title: "Critical Battery",
-        message: `Battery level at ${battery}%. Station may go offline soon.`,
-      };
-    }
-    if (battery < 20) {
-      return {
-        severity: "warning",
-        title: "Low Battery",
-        message: `Battery level at ${battery}%. Charging recommended.`,
       };
     }
     return null;

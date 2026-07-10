@@ -29,7 +29,6 @@ const char* TOPIC_PRESENCE  = "home/presence";
 // --- Sensor pins ---
 #define RAIN_SENSOR_PIN 35
 #define LIGHT_SENSOR_PIN 34
-#define BATTERY_PIN 32
 #define SERVO_PIN 13
 
 // --- Servo ---
@@ -59,7 +58,6 @@ float tempHigh         = 30.0;
 float tempLow          = 18.0;
 float humidityHigh     = 80.0;
 int   nightLightThresh = 200;
-float batteryLow       = 20.0;
 
 WiFiClient wifiClient;
 WiFiClientSecure tlsClient;
@@ -68,10 +66,10 @@ PubSubClient mqtt(MQTT_TLS ? tlsClient : wifiClient);
 void connectWiFi();
 void connectMQTT();
 void callback(char* topic, byte* payload, unsigned int length);
-void publishTelemetry(bool rain, float lightRaw, float bat);
+void publishTelemetry(bool rain, int lightRaw);
 void publishStatus();
 void publishEvent(const char* type, const char* message);
-void evaluateAutoMode(bool rain, float lightRaw, float bat);
+void evaluateAutoMode(bool rain, int lightRaw);
 void moveServo(int angle);
 String classifyPrediction(bool rain);
 
@@ -83,7 +81,6 @@ void setup() {
 
   pinMode(RAIN_SENSOR_PIN, INPUT);
   pinMode(LIGHT_SENSOR_PIN, INPUT);
-  pinMode(BATTERY_PIN, INPUT);
 
   windowServo.attach(SERVO_PIN);
   windowServo.write(SERVO_CLOSED);
@@ -104,15 +101,13 @@ void loop() {
 
     bool rain      = digitalRead(RAIN_SENSOR_PIN) == LOW;
     int lightRaw   = analogRead(LIGHT_SENSOR_PIN);
-    float bat_voltage = analogRead(BATTERY_PIN) / 4095.0 * 3.3 * 2;
-    float bat = constrain((bat_voltage - 3.0) / (4.2 - 3.0) * 100.0, 0.0, 100.0);
 
     if (currentMode == MODE_AUTO) {
-      evaluateAutoMode(rain, lightRaw, bat);
+      evaluateAutoMode(rain, lightRaw);
     }
 
     prediction = classifyPrediction(rain);
-    publishTelemetry(rain, lightRaw, bat);
+    publishTelemetry(rain, lightRaw);
   }
 
   if (now - lastStatus >= STATUS_INTERVAL) {
@@ -190,14 +185,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
       if (doc.containsKey("tempLow")) tempLow = doc["tempLow"];
       if (doc.containsKey("humidityHigh")) humidityHigh = doc["humidityHigh"];
       if (doc.containsKey("nightLightThreshold")) nightLightThresh = doc["nightLightThreshold"];
-      if (doc.containsKey("batteryLow")) batteryLow = doc["batteryLow"];
       publishEvent("success", "Configuration updated");
       Serial.println("Config updated");
     }
   }
 }
 
-void evaluateAutoMode(bool rain, int lightRaw, float bat) {
+void evaluateAutoMode(bool rain, int lightRaw) {
   if (presence == "AWAY" || presence == "VACATION") {
     moveServo(SERVO_CLOSED);
     windowState = "CLOSED";
@@ -209,13 +203,6 @@ void evaluateAutoMode(bool rain, int lightRaw, float bat) {
     moveServo(SERVO_CLOSED);
     windowState = "CLOSED";
     reason = "RAIN";
-    return;
-  }
-
-  if (bat < batteryLow) {
-    moveServo(SERVO_CLOSED);
-    windowState = "CLOSED";
-    reason = "LOW_BATTERY";
     return;
   }
 
@@ -250,7 +237,7 @@ void moveServo(int angle) {
   Serial.println(angle);
 }
 
-void publishTelemetry(bool rain, int lightRaw, float bat) {
+void publishTelemetry(bool rain, int lightRaw) {
   const char* lightState = lightRaw >= nightLightThresh ? "DAY" : "NIGHT";
 
   StaticJsonDocument<384> doc;
@@ -258,7 +245,6 @@ void publishTelemetry(bool rain, int lightRaw, float bat) {
   doc["rain"]        = rain;
   doc["light"]       = lightRaw;
   doc["lightState"]  = lightState;
-  doc["battery"]     = bat;
   doc["window"]      = windowState;
   doc["mode"]        = currentModeStr;
   doc["prediction"]  = prediction;

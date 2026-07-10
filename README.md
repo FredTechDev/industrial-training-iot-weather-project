@@ -6,7 +6,7 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 
 ```
                            ESP32 WEATHER STATION
-                   (Rain + Light + Battery + Servo)
+                   (Rain + Light + Servo)
                                       │
                                       │
                           Reads Sensors Every 15s
@@ -44,7 +44,7 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 
 ## How It Works
 
-**ESP32** handles: rain detection, light level, battery monitoring, servo control
+**ESP32** handles: rain detection, light level, servo control
 **OpenWeatherMap** provides: temperature, humidity, atmospheric pressure
 **Backend** merges both data sources and stores unified readings
 **Frontend** displays real-time dashboard with rule-based window automation
@@ -69,7 +69,6 @@ A production-quality academic project demonstrating an end-to-end IoT solution f
 | YL-83 | Rain Detection | Digital (GPIO35) |
 | LDR | Ambient Light | Analog (GPIO34) |
 | Servo Motor | Window Open/Close | PWM (GPIO13) |
-| Battery Monitor | Power Level | Analog (GPIO32) |
 
 ## Quick Start
 
@@ -108,7 +107,7 @@ docker compose up --build
 ```
 ESP32 (Physical Hardware)
   │
-  │  Reads rain sensor, light sensor, battery every 15 seconds
+  │  Reads rain sensor and light sensor every 15 seconds
   │  Publishes JSON payload to MQTT
   │
   ▼
@@ -117,7 +116,7 @@ HiveMQ Cloud (MQTT Broker)
   ▼
 Node.js Backend
   │
-  │  1. Receives ESP32 data (rain, light, battery)
+  │  1. Receives ESP32 data (rain, light)
   │  2. Fetches OpenWeatherMap data (temp, humidity, pressure)
   │  3. Merges into unified reading
   │  4. Validates and sanitizes
@@ -141,7 +140,6 @@ The ESP32 automatically controls the window based on:
 | Condition | Action | Reason |
 |-----------|--------|--------|
 | Rain detected | Close | Prevent water damage |
-| Low battery (<20%) | Close | Preserve power |
 | Night time (22:00-06:00) | Close | Security |
 | Low light level | Close | Night security |
 | Away/Vacation mode | Close | Security |
@@ -176,7 +174,6 @@ Managed by Prisma ORM, auto-synced to Supabase on startup.
 | pressure | DECIMAL(6,1) | hPa (from OpenWeatherMap) |
 | light | INTEGER | Lux (from ESP32) |
 | rain | BOOLEAN | Rain detected (from ESP32) |
-| battery | DECIMAL(5,1) | Percentage (from ESP32) |
 | recorded_at | TIMESTAMPTZ | Reading timestamp |
 
 ### `alerts`
@@ -205,8 +202,6 @@ Registered IoT device metadata.
 | Very Low Pressure | < 970 hPa | Critical |
 | Storm Risk | Pressure dropping rapidly | Warning |
 | Heavy Rain | Rain + humidity > 85% | Warning |
-| Critical Battery | < 10% | Critical |
-| Low Battery | < 20% | Warning |
 
 ## Environment Variables
 

@@ -117,7 +117,6 @@ class MqttSubscriber {
       light: typeof data.light === "number" ? data.light : null,
       lightState: data.lightState || (typeof data.light === "string" ? data.light : null),
       rain: typeof data.rain === "boolean" ? data.rain : null,
-      battery: typeof data.battery === "number" ? data.battery : null,
     };
 
     const validation = validateSensorReading(reading);

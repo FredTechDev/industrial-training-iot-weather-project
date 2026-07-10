@@ -38,7 +38,6 @@ GET /api/weather/latest?deviceId=station-001
   "pressure": 1013.2,
   "light": 3200,
   "rain": false,
-  "battery": 100.0,
   "recordedAt": "2026-01-15T10:30:00.000Z",
   "createdAt": "2026-01-15T10:30:00.000Z"
 }

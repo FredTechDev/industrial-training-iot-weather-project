@@ -22,7 +22,6 @@ export default function SettingsPage() {
       tempLow: 18,
       humidityHigh: 80,
       nightLightThreshold: 200,
-      batteryLow: 20,
       telemetryInterval: 15,
     };
     setLocal(defaults);
@@ -35,7 +34,6 @@ export default function SettingsPage() {
     { key: "tempLow" as const, label: "Low Temperature Threshold", unit: "°C", desc: "Window closes below this" },
     { key: "humidityHigh" as const, label: "Humidity Threshold", unit: "%", desc: "Window closes above this" },
     { key: "nightLightThreshold" as const, label: "Night Light Threshold", unit: "ADC", desc: "Night security trigger" },
-    { key: "batteryLow" as const, label: "Low Battery Threshold", unit: "%", desc: "Emergency safe-close" },
     { key: "telemetryInterval" as const, label: "Telemetry Interval", unit: "sec", desc: "ESP32 publish rate" },
   ];
 

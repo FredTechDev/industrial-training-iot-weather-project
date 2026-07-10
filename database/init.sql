@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS weather_readings (
     pressure DECIMAL(6, 1),
     light INTEGER,
     rain BOOLEAN NOT NULL DEFAULT FALSE,
-    battery DECIMAL(5, 1),
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

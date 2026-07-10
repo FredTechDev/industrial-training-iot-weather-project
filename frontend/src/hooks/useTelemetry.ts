@@ -26,13 +26,6 @@ export function useTelemetry() {
     return "normal";
   }, [telemetry]);
 
-  const batteryLevel = useMemo(() => {
-    if (!telemetry || telemetry.battery == null) return "normal";
-    if (telemetry.battery < SENSOR_THRESHOLDS.battery.danger.low) return "danger";
-    if (telemetry.battery < 40) return "warning";
-    return "normal";
-  }, [telemetry]);
-
   const threatColor = useMemo(() => {
     if (!telemetry) return "text-gray-400";
     switch (telemetry.prediction) {
@@ -42,5 +35,5 @@ export function useTelemetry() {
     }
   }, [telemetry]);
 
-  return { telemetry, tempLevel, humidityLevel, pressureLevel, batteryLevel, threatColor };
+  return { telemetry, tempLevel, humidityLevel, pressureLevel, threatColor };
 }

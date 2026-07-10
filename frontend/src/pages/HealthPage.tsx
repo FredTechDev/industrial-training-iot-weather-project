@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useAppStore } from "../stores/useAppStore";
 import { useTelemetry } from "../hooks/useTelemetry";
-import BatteryIndicator from "../components/common/BatteryIndicator";
 import { formatDuration } from "../utils/format";
 import {
   Wifi, Radio, Cpu, HardDrive, Clock, Globe, Server, Activity, ThermometerSun,
@@ -68,13 +67,8 @@ export default function HealthPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h3 className="text-lg font-semibold mb-4">Power & Sensors</h3>
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs text-gray-500 mb-2">Battery Level</p>
-              <BatteryIndicator level={telemetry?.battery ?? 0} size="lg" />
-            </div>
-            <div className="space-y-3">
+          <h3 className="text-lg font-semibold mb-4">Sensors</h3>
+          <div className="space-y-3">
               {[
                 { label: "DHT22", desc: "Temperature & Humidity", status: "active" },
                 { label: "YL-83", desc: "Rain Detection", status: telemetry?.rain ? "alert" : "active" },

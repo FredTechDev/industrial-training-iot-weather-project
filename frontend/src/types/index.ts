@@ -5,7 +5,6 @@ export interface TelemetryPayload {
   light: number | null;
   lightState: "DAY" | "NIGHT" | null;
   rain: boolean | null;
-  battery: number | null;
   window: "OPEN" | "CLOSED";
   mode: "AUTO" | "MANUAL";
   prediction: "SAFE" | "WARNING" | "CRITICAL";
@@ -37,7 +36,6 @@ export interface DeviceConfig {
   tempLow: number;
   humidityHigh: number;
   nightLightThreshold: number;
-  batteryLow: number;
   telemetryInterval: number;
 }
 

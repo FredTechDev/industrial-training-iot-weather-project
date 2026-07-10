@@ -35,7 +35,6 @@ export const REASON_LABELS: Record<string, { label: string; icon: string; color:
   STORM_PREDICTION: { label: "Storm Predicted", icon: "cloud-lightning", color: "text-purple-400" },
   HIGH_HUMIDITY: { label: "High Humidity", icon: "droplets", color: "text-cyan-400" },
   NIGHT_SECURITY: { label: "Night Security", icon: "moon", color: "text-indigo-400" },
-  LOW_BATTERY: { label: "Low Battery", icon: "battery-warning", color: "text-red-400" },
   TEMP_LIMIT: { label: "Temperature Limit", icon: "thermometer", color: "text-orange-400" },
 };
 
@@ -43,7 +42,6 @@ export const SENSOR_THRESHOLDS = {
   temp: { min: -10, max: 50, danger: { low: 5, high: 40 } },
   humidity: { min: 0, max: 100, danger: { low: 20, high: 85 } },
   pressure: { min: 900, max: 1100, danger: { low: 970, high: 1040 } },
-  battery: { min: 0, max: 100, danger: { low: 20, high: 100 } },
 } as const;
 
 export const NAV_ITEMS = [

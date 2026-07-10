@@ -25,10 +25,6 @@ function validateSensorReading(data) {
     warnings.push(`light`);
   }
 
-  if (data.battery !== undefined && data.battery !== null && (typeof data.battery !== "number" || data.battery < thresholds.minBattery || data.battery > thresholds.maxBattery)) {
-    warnings.push(`battery`);
-  }
-
   return {
     valid: true,
     warnings,
@@ -51,9 +47,6 @@ function sanitizeReading(data) {
       ? parseInt(data.light, 10)
       : null,
     rain: data.rain === true || data.rain === "true",
-    battery: data.battery !== undefined && typeof data.battery === "number" && data.battery >= thresholds.minBattery && data.battery <= thresholds.maxBattery
-      ? parseFloat(data.battery.toFixed(1))
-      : null,
     recordedAt: data.timestamp ? new Date(data.timestamp) : new Date(),
   };
 }

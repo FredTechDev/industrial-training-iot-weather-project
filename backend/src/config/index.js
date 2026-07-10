@@ -46,8 +46,6 @@ const config = {
     minPressure: 700,
     maxLight: 100000,
     minLight: 0,
-    maxBattery: 100,
-    minBattery: 0,
   },
 
   logging: {

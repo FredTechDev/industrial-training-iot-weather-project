@@ -114,50 +114,58 @@ export default function SensorsPage() {
 
         {/* Rain */}
         <SensorCard title="Rain Sensor" icon={CloudRain} delay={0.15}>
-          <div className="flex flex-col items-center gap-3 py-4">
-            {telemetry?.rain ? (
-              <>
-                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
-                  <CloudRain size={32} className="text-blue-400" />
-                </div>
-                <StatusBadge status="RAIN DETECTED" color="bg-blue-500/15 text-blue-400 border-blue-500/30" />
-                {telemetry?.rainIntensity != null && (
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-400">{telemetry.rainIntensity}%</p>
-                    <p className="text-xs text-gray-500">Intensity</p>
+          {telemetry != null ? (
+            <div className="flex flex-col items-center gap-3 py-4">
+              {telemetry.rain ? (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
+                    <CloudRain size={32} className="text-blue-400" />
                   </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
-                  <CloudRain size={32} className="text-gray-600" />
-                </div>
-                <StatusBadge status="DRY" color="bg-gray-500/15 text-gray-400 border-gray-500/30" />
-              </>
-            )}
-          </div>
+                  <StatusBadge status="RAIN DETECTED" color="bg-blue-500/15 text-blue-400 border-blue-500/30" />
+                  {telemetry.rainIntensity != null && (
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-400">{telemetry.rainIntensity}%</p>
+                      <p className="text-xs text-gray-500">Intensity</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
+                    <CloudRain size={32} className="text-gray-600" />
+                  </div>
+                  <StatusBadge status="DRY" color="bg-gray-500/15 text-gray-400 border-gray-500/30" />
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-xs text-center py-8">Waiting for data...</p>
+          )}
         </SensorCard>
 
         {/* Light */}
         <SensorCard title="Light Level" icon={Sun} delay={0.2}>
-          <div className="flex flex-col items-center gap-3 py-4">
-            <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
-              {telemetry?.lightState === "NIGHT" ? (
-                <Moon size={32} className="text-indigo-400" />
+          {telemetry != null ? (
+            <div className="flex flex-col items-center gap-3 py-4">
+              <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                {telemetry.lightState === "NIGHT" ? (
+                  <Moon size={32} className="text-indigo-400" />
+                ) : (
+                  <Sun size={32} className="text-yellow-400" />
+                )}
+              </div>
+              {telemetry.lightState ? (
+                <StatusBadge
+                  status={telemetry.lightState}
+                  color={telemetry.lightState === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
+                />
               ) : (
-                <Sun size={32} className="text-yellow-400" />
+                <span className="text-xs text-gray-500">Awaiting data...</span>
               )}
             </div>
-            {telemetry?.lightState ? (
-              <StatusBadge
-                status={telemetry.lightState}
-                color={telemetry.lightState === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
-              />
-            ) : (
-              <span className="text-xs text-gray-500">Awaiting data...</span>
-            )}
-          </div>
+          ) : (
+            <p className="text-gray-500 text-xs text-center py-8">Waiting for data...</p>
+          )}
         </SensorCard>
       </div>
     </div>

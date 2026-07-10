@@ -3,7 +3,7 @@ import { useTelemetry } from "../hooks/useTelemetry";
 import Gauge from "../components/common/Gauge";
 import StatusBadge from "../components/common/StatusBadge";
 import { SENSOR_THRESHOLDS } from "../constants";
-import { CloudRain, Sun, Moon, Thermometer, Droplets, Gauge } from "lucide-react";
+import { CloudRain, Sun, Moon, Thermometer, Droplets } from "lucide-react";
 
 function SensorCard({ title, icon: Icon, children, delay = 0 }: {
   title: string; icon: React.ElementType; children: React.ReactNode; delay?: number;

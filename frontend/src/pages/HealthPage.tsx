@@ -70,8 +70,7 @@ export default function HealthPage() {
           <h3 className="text-lg font-semibold mb-4">Sensors</h3>
           <div className="space-y-3">
               {[
-                { label: "DHT22", desc: "Temperature & Humidity", status: "active" },
-                { label: "YL-83", desc: "Rain Detection", status: telemetry?.rain ? "alert" : "active" },
+                { label: "YL-83", desc: "Rain Detection (Digital + Analog)", status: telemetry?.rain ? "alert" : "active" },
                 { label: "LDR", desc: "Light Sensor", status: "active" },
                 { label: "Servo SG90", desc: "Clothesline Actuator", status: "active" },
               ].map((sensor) => (
@@ -88,7 +87,6 @@ export default function HealthPage() {
                 </div>
               ))}
             </div>
-          </div>
         </motion.div>
       </div>
     </div>

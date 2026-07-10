@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "cd frontend && npm install && npm run build",
-    "start": "cd backend && npm ci --omit=dev && npx prisma generate && npx prisma db push --accept-data-loss; node src/app.js",
+    "start": "cd backend && npx prisma generate && (npx prisma db push --accept-data-loss || true) && node src/app.js",
     "postinstall": "cd backend && npm install"
   },
   "engines": {

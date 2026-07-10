@@ -17,13 +17,7 @@ exports.getStatus = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    res.json({
-      uptime: process.uptime(),
-      totalReadings: 0,
-      devices: [],
-      latestReading: null,
-      websocketClients: 0,
-      timestamp: new Date().toISOString(),
-    });
+    console.error("getStatus error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

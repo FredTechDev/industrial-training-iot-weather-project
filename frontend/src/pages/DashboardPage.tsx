@@ -31,7 +31,7 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center gap-4">
               <ClotheslineAnimation isExtended={telemetry?.line === "EXTENDED"} />
               <div className="mt-6">
-                <StatusBadge status={telemetry?.line || "RETRACTED"} pulse />
+                {telemetry?.line ? <StatusBadge status={telemetry.line} pulse /> : <span className="text-xs text-gray-500">Awaiting data...</span>}
               </div>
             </div>
 
@@ -39,18 +39,20 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Operating Mode</p>
-                <StatusBadge status={telemetry?.mode || "AUTO"} />
+                {telemetry?.mode ? <StatusBadge status={telemetry.mode} /> : <span className="text-sm text-gray-500">--</span>}
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Threat Level</p>
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${THREAT_COLORS[telemetry?.prediction || "SAFE"]}`}>
-                  {telemetry?.prediction || "SAFE"}
-                </div>
+                {telemetry?.prediction ? (
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${THREAT_COLORS[telemetry.prediction]}`}>
+                    {telemetry.prediction}
+                  </div>
+                ) : <span className="text-sm text-gray-500">--</span>}
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Reason</p>
-                <p className={`text-sm font-medium ${REASON_LABELS[telemetry?.reason || "SAFE"]?.color || "text-gray-400"}`}>
-                  {REASON_LABELS[telemetry?.reason || "SAFE"]?.label || telemetry?.reason || "Awaiting data"}
+                <p className={`text-sm font-medium ${telemetry?.reason ? REASON_LABELS[telemetry.reason]?.color || "text-gray-400" : "text-gray-500"}`}>
+                  {telemetry?.reason ? (REASON_LABELS[telemetry.reason]?.label || telemetry.reason) : "Awaiting data..."}
                 </p>
               </div>
             </div>
@@ -83,7 +85,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Uptime</p>
-                  <p className="text-sm font-medium text-white">{formatDuration(deviceStatus?.uptime ?? 0)}</p>
+                  <p className="text-sm font-medium text-white">{deviceStatus?.uptime != null ? formatDuration(deviceStatus.uptime) : "--"}</p>
                 </div>
               </div>
             </div>

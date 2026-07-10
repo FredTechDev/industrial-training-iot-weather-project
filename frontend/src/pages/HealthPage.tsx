@@ -43,8 +43,8 @@ export default function HealthPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <HealthCard label="WiFi Signal" value={`${deviceStatus?.wifiSignal ?? "--"} dBm`} icon={Wifi} color="bg-blue-500/10 text-blue-400" delay={0} />
         <HealthCard label="MQTT Latency" value={`${deviceStatus?.mqttLatency ?? "--"} ms`} icon={Radio} color="bg-emerald-500/10 text-emerald-400" delay={0.05} />
-        <HealthCard label="Heap Free" value={`${((deviceStatus?.heapFree ?? 0) / 1024).toFixed(1)} KB`} icon={HardDrive} color="bg-purple-500/10 text-purple-400" delay={0.1} />
-        <HealthCard label="Uptime" value={formatDuration(deviceStatus?.uptime ?? 0)} icon={Clock} color="bg-amber-500/10 text-amber-400" delay={0.15} />
+        <HealthCard label="Heap Free" value={deviceStatus?.heapFree != null ? `${(deviceStatus.heapFree / 1024).toFixed(1)} KB` : "--"} icon={HardDrive} color="bg-purple-500/10 text-purple-400" delay={0.1} />
+        <HealthCard label="Uptime" value={deviceStatus?.uptime != null ? formatDuration(deviceStatus.uptime) : "--"} icon={Clock} color="bg-amber-500/10 text-amber-400" delay={0.15} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

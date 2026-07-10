@@ -16,15 +16,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_MQTT_BROKER_URL=${VITE_MQTT_BROKER_URL}
+        - VITE_MQTT_USERNAME=${VITE_MQTT_USERNAME}
+        - VITE_MQTT_PASSWORD=${VITE_MQTT_PASSWORD}
+        - VITE_MQTT_CLIENT_PREFIX=${VITE_MQTT_CLIENT_PREFIX}
     container_name: iot-frontend
     restart: unless-stopped
     ports:
       - "5173:80"
-    env_file:
-      - .env
-    environment:
-      - VITE_API_URL=http://localhost:3001
-      - VITE_WS_URL=http://localhost:3001
     depends_on:
       - backend
     networks:

@@ -36,14 +36,7 @@ exports.getDashboard = async (req, res) => {
 
     res.json(cache);
   } catch (err) {
-    res.json({
-      uptime: process.uptime(),
-      totalReadings: 0,
-      latestReading: null,
-      devices: [],
-      activeAlerts: [],
-      websocketClients: 0,
-      timestamp: new Date().toISOString(),
-    });
+    console.error("getDashboard error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

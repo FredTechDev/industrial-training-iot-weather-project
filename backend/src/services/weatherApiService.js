@@ -39,7 +39,12 @@ class WeatherApiService {
       return this.cache;
     } catch (err) {
       logger.error("Failed to fetch OpenWeatherMap data", { error: err.message });
-      return this.cache;
+      const cacheAge = now - this.lastFetch;
+      if (this.cache && cacheAge < this.fetchInterval * 2) {
+        logger.warn("Serving stale weather data", { ageMs: cacheAge });
+        return this.cache;
+      }
+      return null;
     }
   }
 }

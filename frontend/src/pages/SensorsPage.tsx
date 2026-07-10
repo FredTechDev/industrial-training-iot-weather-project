@@ -39,61 +39,76 @@ export default function SensorsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Temperature */}
         <SensorCard title="Temperature" icon={Thermometer} delay={0}>
-          <div className="flex justify-center">
-            <Gauge
-              value={telemetry?.temperature ?? 0}
-              min={SENSOR_THRESHOLDS.temp.min}
-              max={SENSOR_THRESHOLDS.temp.max}
-              label="Temperature"
-              unit="°C"
-              color="#f59e0b"
-              dangerLow={SENSOR_THRESHOLDS.temp.danger.low}
-              dangerHigh={SENSOR_THRESHOLDS.temp.danger.high}
-            />
-          </div>
-          {tempLevel === "danger" && (
-            <p className="text-red-400 text-xs text-center mt-2 font-medium">⚠ Outside safe range</p>
+          {telemetry?.temperature != null ? (
+            <>
+              <div className="flex justify-center">
+                <Gauge
+                  value={telemetry.temperature}
+                  min={SENSOR_THRESHOLDS.temp.min}
+                  max={SENSOR_THRESHOLDS.temp.max}
+                  label="Temperature"
+                  unit="°C"
+                  color="#f59e0b"
+                  dangerLow={SENSOR_THRESHOLDS.temp.danger.low}
+                  dangerHigh={SENSOR_THRESHOLDS.temp.danger.high}
+                />
+              </div>
+              {tempLevel === "danger" && (
+                <p className="text-red-400 text-xs text-center mt-2 font-medium">⚠ Outside safe range</p>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-500 text-xs text-center py-8">Waiting for data...</p>
           )}
         </SensorCard>
 
         {/* Humidity */}
         <SensorCard title="Humidity" icon={Droplets} delay={0.05}>
-          <div className="flex justify-center">
-            <Gauge
-              value={telemetry?.humidity ?? 0}
-              min={SENSOR_THRESHOLDS.humidity.min}
-              max={SENSOR_THRESHOLDS.humidity.max}
-              label="Humidity"
-              unit="%"
-              color="#06b6d4"
-              dangerHigh={SENSOR_THRESHOLDS.humidity.danger.high}
-              dangerLow={SENSOR_THRESHOLDS.humidity.danger.low}
-            />
-          </div>
-          {humidityLevel === "danger" && (
-            <p className="text-red-400 text-xs text-center mt-2 font-medium">⚠ Outside safe range</p>
+          {telemetry?.humidity != null ? (
+            <>
+              <div className="flex justify-center">
+                <Gauge
+                  value={telemetry.humidity}
+                  min={SENSOR_THRESHOLDS.humidity.min}
+                  max={SENSOR_THRESHOLDS.humidity.max}
+                  label="Humidity"
+                  unit="%"
+                  color="#06b6d4"
+                  dangerHigh={SENSOR_THRESHOLDS.humidity.danger.high}
+                  dangerLow={SENSOR_THRESHOLDS.humidity.danger.low}
+                />
+              </div>
+              {humidityLevel === "danger" && (
+                <p className="text-red-400 text-xs text-center mt-2 font-medium">⚠ Outside safe range</p>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-500 text-xs text-center py-8">Waiting for data...</p>
           )}
         </SensorCard>
 
         {/* Pressure */}
         <SensorCard title="Atmospheric Pressure" icon={Gauge} delay={0.1}>
-          <div className="flex justify-center">
-            <Gauge
-              value={telemetry?.pressure ?? 0}
-              min={SENSOR_THRESHOLDS.pressure.min}
-              max={SENSOR_THRESHOLDS.pressure.max}
-              label="Pressure"
-              unit=" hPa"
-              color="#8b5cf6"
-              dangerLow={SENSOR_THRESHOLDS.pressure.danger.low}
-              dangerHigh={SENSOR_THRESHOLDS.pressure.danger.high}
-            />
-          </div>
-          {!telemetry?.pressure && (
-            <p className="text-gray-500 text-xs text-center mt-2">Waiting for data...</p>
-          )}
-          {telemetry?.pressure && telemetry.pressure < SENSOR_THRESHOLDS.pressure.danger.low && (
-            <p className="text-amber-400 text-xs text-center mt-2 font-medium">⚠ Low pressure — storm risk</p>
+          {telemetry?.pressure != null ? (
+            <>
+              <div className="flex justify-center">
+                <Gauge
+                  value={telemetry.pressure}
+                  min={SENSOR_THRESHOLDS.pressure.min}
+                  max={SENSOR_THRESHOLDS.pressure.max}
+                  label="Pressure"
+                  unit=" hPa"
+                  color="#8b5cf6"
+                  dangerLow={SENSOR_THRESHOLDS.pressure.danger.low}
+                  dangerHigh={SENSOR_THRESHOLDS.pressure.danger.high}
+                />
+              </div>
+              {telemetry.pressure < SENSOR_THRESHOLDS.pressure.danger.low && (
+                <p className="text-amber-400 text-xs text-center mt-2 font-medium">⚠ Low pressure — storm risk</p>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-500 text-xs text-center py-8">Waiting for data...</p>
           )}
         </SensorCard>
 
@@ -134,10 +149,14 @@ export default function SensorsPage() {
                 <Sun size={32} className="text-yellow-400" />
               )}
             </div>
-            <StatusBadge
-              status={telemetry?.lightState || "DAY"}
-              color={telemetry?.lightState === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
-            />
+            {telemetry?.lightState ? (
+              <StatusBadge
+                status={telemetry.lightState}
+                color={telemetry.lightState === "NIGHT" ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"}
+              />
+            ) : (
+              <span className="text-xs text-gray-500">Awaiting data...</span>
+            )}
           </div>
         </SensorCard>
       </div>

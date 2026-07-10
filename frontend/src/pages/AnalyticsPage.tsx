@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
       time: "Now",
       temp: base.temperature,
       humidity: base.humidity,
-        pressure: base.pressure || 0,
+        pressure: base.pressure,
         rain: base.rain ? 1 : 0,
     }];
   }, [sensorHistory]);

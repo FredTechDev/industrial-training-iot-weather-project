@@ -26,11 +26,15 @@ export default function ControlCenterPage() {
 
         <div className="mb-6 p-4 bg-gray-800/50 rounded-xl">
           <p className="text-xs text-gray-500 mb-2">Current Device State</p>
-          <div className="flex flex-wrap gap-2">
-            <StatusBadge status={telemetry?.line || "RETRACTED"} pulse />
-            <StatusBadge status={telemetry?.mode || "AUTO"} />
-            <StatusBadge status={telemetry?.prediction || "SAFE"} />
-          </div>
+          {telemetry ? (
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge status={telemetry.line} pulse />
+              <StatusBadge status={telemetry.mode} />
+              <StatusBadge status={telemetry.prediction} />
+            </div>
+          ) : (
+            <span className="text-sm text-gray-500">Awaiting data from device...</span>
+          )}
         </div>
 
         <ControlPanel />

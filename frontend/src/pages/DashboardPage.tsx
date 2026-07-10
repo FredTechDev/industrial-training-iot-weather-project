@@ -150,7 +150,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Temperature</p>
-              <p className="text-sm font-medium text-white">{telemetry?.owmTemperature ?? "--"}°C</p>
+              <p className="text-sm font-medium text-white">{telemetry?.temperature ?? "--"}°C</p>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
@@ -159,7 +159,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Humidity</p>
-              <p className="text-sm font-medium text-white">{telemetry?.owmHumidity ?? "--"}%</p>
+              <p className="text-sm font-medium text-white">{telemetry?.humidity ?? "--"}%</p>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
@@ -168,7 +168,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Pressure</p>
-              <p className="text-sm font-medium text-white">{telemetry?.owmPressure ?? "--"} hPa</p>
+              <p className="text-sm font-medium text-white">{telemetry?.pressure ?? "--"} hPa</p>
             </div>
           </div>
         </div>

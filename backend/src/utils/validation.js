@@ -50,7 +50,7 @@ function sanitizeReading(data) {
     light: data.light !== undefined && typeof data.light === "number" && data.light >= thresholds.minLight && data.light <= thresholds.maxLight
       ? parseInt(data.light, 10)
       : null,
-    rain: data.rain === true || data.rain === "true",
+    rain: typeof data.rain === "boolean" ? data.rain : null,
     rainIntensity: typeof data.rainIntensity === "number" && data.rainIntensity >= 0
       ? Math.min(100, Math.round(data.rainIntensity))
       : null,

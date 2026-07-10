@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS weather_readings (
     humidity DECIMAL(5, 1),
     pressure DECIMAL(6, 1),
     light INTEGER,
-    rain BOOLEAN NOT NULL DEFAULT FALSE,
+    rain BOOLEAN,
     rain_intensity INTEGER,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

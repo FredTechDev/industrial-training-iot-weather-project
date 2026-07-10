@@ -33,7 +33,7 @@ export default function SensorsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Live Sensors</h1>
-        <p className="text-gray-400 text-sm">Real-time environmental readings from ESP32</p>
+        <p className="text-gray-400 text-sm">OWM weather data with live ESP32 rain &amp; light readings</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

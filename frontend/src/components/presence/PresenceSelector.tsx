@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useAppStore } from "../../stores/useAppStore";
-import { useCommands } from "../../hooks/useCommands";
+import { mqttService } from "../../services/mqtt";
 import { PRESENCE_OPTIONS } from "../../constants";
 import { House, DoorOpen, Plane } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,12 +8,12 @@ import toast from "react-hot-toast";
 const ICON_MAP: Record<string, React.ElementType> = { House, DoorOpen, Plane };
 
 export default function PresenceSelector() {
-  const { presence, setPresence } = useAppStore();
-  const { send } = useCommands();
+  const { presence, setPresence, addCommand } = useAppStore();
 
   const handlePresenceChange = (mode: "HOME" | "AWAY" | "VACATION") => {
     setPresence(mode);
-    send(`PRESENCE:${mode}`, `Presence → ${mode}`, false);
+    const ok = mqttService.publishPresence(mode);
+    addCommand(mode, ok);
     toast.success(`Presence set to ${mode}`, { icon: mode === "HOME" ? "🏠" : mode === "AWAY" ? "🚪" : "✈️" });
   };
 

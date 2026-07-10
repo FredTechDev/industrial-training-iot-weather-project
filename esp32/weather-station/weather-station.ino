@@ -61,7 +61,7 @@ unsigned long lastOwmUpdate = 0;
 // --- Timing ---
 unsigned long lastPublish = 0;
 unsigned long lastStatus  = 0;
-const long PUBLISH_INTERVAL = 15000;
+long publishInterval = 15000;
 const long STATUS_INTERVAL  = 30000;
 unsigned long startTime = 0;
 
@@ -114,7 +114,7 @@ void loop() {
 
   unsigned long now = millis();
 
-  if (now - lastPublish >= PUBLISH_INTERVAL) {
+  if (now - lastPublish >= publishInterval) {
     lastPublish = now;
 
     bool rain      = digitalRead(RAIN_SENSOR_PIN) == LOW;
@@ -137,7 +137,7 @@ void loop() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  char message[64];
+  char message[256];
   unsigned int copyLen = length < sizeof(message) - 1 ? length : sizeof(message) - 1;
   memcpy(message, payload, copyLen);
   message[copyLen] = '\0';
@@ -205,6 +205,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       if (doc.containsKey("tempLow")) tempLow = doc["tempLow"];
       if (doc.containsKey("humidityHigh")) humidityHigh = doc["humidityHigh"];
       if (doc.containsKey("nightLightThreshold")) nightLightThresh = doc["nightLightThreshold"];
+      if (doc.containsKey("telemetryInterval")) publishInterval = (long)doc["telemetryInterval"] * 1000;
       publishEvent("success", "Configuration updated");
       Serial.println("Config updated");
     }
@@ -326,8 +327,8 @@ void publishTelemetry(bool rain, int rainIntensity, int lightRaw) {
     doc["owmTemperature"] = owmTemperature;
     doc["owmHumidity"]    = owmHumidity;
     doc["owmPressure"]    = owmPressure;
+    doc["pressureTrend"]  = pressureTrend;
   }
-  doc["pressureTrend"]  = pressureTrend;
   doc["timestamp"]      = "";
 
   char buffer[512];

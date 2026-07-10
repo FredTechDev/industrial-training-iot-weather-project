@@ -29,6 +29,7 @@ const char* TOPIC_PRESENCE  = "home/presence";
 
 // --- Sensor pins ---
 #define RAIN_SENSOR_PIN 35
+#define RAIN_ANALOG_PIN 32
 #define LIGHT_SENSOR_PIN 34
 #define SERVO_PIN 13
 
@@ -76,10 +77,10 @@ PubSubClient mqtt(MQTT_TLS ? tlsClient : wifiClient);
 void connectWiFi();
 void connectMQTT();
 void callback(char* topic, byte* payload, unsigned int length);
-void publishTelemetry(bool rain, int lightRaw);
+void publishTelemetry(bool rain, int rainIntensity, int lightRaw);
 void publishStatus();
 void publishEvent(const char* type, const char* message);
-void evaluateAutoMode(bool rain, int lightRaw);
+void evaluateAutoMode(bool rain, int rainIntensity, int lightRaw);
 void moveServo(int angle);
 String classifyPrediction(bool rain);
 
@@ -90,6 +91,7 @@ void setup() {
   if (MQTT_TLS) tlsClient.setInsecure();
 
   pinMode(RAIN_SENSOR_PIN, INPUT);
+  pinMode(RAIN_ANALOG_PIN, INPUT);
   pinMode(LIGHT_SENSOR_PIN, INPUT);
 
   lineServo.attach(SERVO_PIN);
@@ -110,14 +112,16 @@ void loop() {
     lastPublish = now;
 
     bool rain      = digitalRead(RAIN_SENSOR_PIN) == LOW;
+    int rainRaw     = analogRead(RAIN_ANALOG_PIN);
+    int rainIntensity = map(rainRaw, 0, 4095, 100, 0);
     int lightRaw   = analogRead(LIGHT_SENSOR_PIN);
 
     if (currentMode == MODE_AUTO) {
-      evaluateAutoMode(rain, lightRaw);
+      evaluateAutoMode(rain, rainIntensity, lightRaw);
     }
 
     prediction = classifyPrediction(rain);
-    publishTelemetry(rain, lightRaw);
+    publishTelemetry(rain, rainIntensity, lightRaw);
   }
 
   if (now - lastStatus >= STATUS_INTERVAL) {
@@ -216,7 +220,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-void evaluateAutoMode(bool rain, int lightRaw) {
+void evaluateAutoMode(bool rain, int rainIntensity, int lightRaw) {
   // Check if OWM data is fresh (within 15 minutes)
   bool owmFresh = owmDataReceived && (millis() - lastOwmUpdate < 900000);
 
@@ -297,12 +301,13 @@ void moveServo(int angle) {
   Serial.println(angle);
 }
 
-void publishTelemetry(bool rain, int lightRaw) {
+void publishTelemetry(bool rain, int rainIntensity, int lightRaw) {
   const char* lightState = lightRaw >= nightLightThresh ? "DAY" : "NIGHT";
 
-  StaticJsonDocument<448> doc;
+  StaticJsonDocument<512> doc;
   doc["deviceId"]       = DEVICE_ID;
   doc["rain"]           = rain;
+  doc["rainIntensity"]  = rainIntensity;
   doc["light"]          = lightRaw;
   doc["lightState"]     = lightState;
   doc["line"]           = lineState;
@@ -315,7 +320,7 @@ void publishTelemetry(bool rain, int lightRaw) {
   doc["pressureTrend"]  = pressureTrend;
   doc["timestamp"]      = "";
 
-  char buffer[448];
+  char buffer[512];
   size_t n = serializeJson(doc, buffer);
   mqtt.publish(TOPIC_TELEMETRY, buffer, n);
   Serial.print("Published: ");

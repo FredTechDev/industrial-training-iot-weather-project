@@ -31,6 +31,7 @@ class WeatherService {
           pressure: reading.pressure,
           light: reading.light,
           rain: reading.rain,
+          rainIntensity: reading.rainIntensity,
           recordedAt: reading.recordedAt,
         },
       });

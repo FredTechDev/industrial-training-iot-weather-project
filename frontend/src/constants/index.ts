@@ -42,6 +42,7 @@ export const SENSOR_THRESHOLDS = {
   temp: { min: -10, max: 50, danger: { low: 5, high: 40 } },
   humidity: { min: 0, max: 100, danger: { low: 20, high: 85 } },
   pressure: { min: 900, max: 1100, danger: { low: 970, high: 1040 } },
+  rainIntensity: { min: 0, max: 100, danger: { low: 0, high: 70 } },
 } as const;
 
 export const NAV_ITEMS = [

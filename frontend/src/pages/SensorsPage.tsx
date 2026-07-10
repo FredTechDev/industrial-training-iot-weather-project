@@ -106,13 +106,19 @@ export default function SensorsPage() {
                   <CloudRain size={32} className="text-blue-400" />
                 </div>
                 <StatusBadge status="RAIN DETECTED" color="bg-blue-500/15 text-blue-400 border-blue-500/30" />
+                {telemetry?.rainIntensity != null && (
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-400">{telemetry.rainIntensity}%</p>
+                    <p className="text-xs text-gray-500">Intensity</p>
+                  </div>
+                )}
               </>
             ) : (
               <>
                 <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
                   <CloudRain size={32} className="text-gray-600" />
                 </div>
-                <StatusBadge status="NO RAIN" color="bg-gray-500/15 text-gray-400 border-gray-500/30" />
+                <StatusBadge status="DRY" color="bg-gray-500/15 text-gray-400 border-gray-500/30" />
               </>
             )}
           </div>

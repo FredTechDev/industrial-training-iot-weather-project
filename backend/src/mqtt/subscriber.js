@@ -202,6 +202,7 @@ class MqttSubscriber {
       light: typeof data.light === "number" ? data.light : null,
       lightState: data.lightState || (typeof data.light === "string" ? data.light : null),
       rain: typeof data.rain === "boolean" ? data.rain : null,
+      rainIntensity: typeof data.rainIntensity === "number" ? data.rainIntensity : null,
       owmTemperature: data.owmTemperature ?? null,
       owmHumidity: data.owmHumidity ?? null,
       owmPressure: data.owmPressure ?? null,
@@ -218,7 +219,7 @@ class MqttSubscriber {
     const saved = await weatherService.saveReading(sanitized);
     if (!saved) return;
 
-    const broadcast = { ...saved, lightState: reading.lightState, owmTemperature: reading.owmTemperature, owmHumidity: reading.owmHumidity, owmPressure: reading.owmPressure, pressureTrend: reading.pressureTrend };
+    const broadcast = { ...saved, lightState: reading.lightState, rainIntensity: reading.rainIntensity, owmTemperature: reading.owmTemperature, owmHumidity: reading.owmHumidity, owmPressure: reading.owmPressure, pressureTrend: reading.pressureTrend };
 
     // Broadcast to any Socket.IO clients (legacy pages)
     socketService.broadcast("weather:reading", broadcast);

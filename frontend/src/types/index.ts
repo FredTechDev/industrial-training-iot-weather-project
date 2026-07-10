@@ -5,6 +5,7 @@ export interface TelemetryPayload {
   light: number | null;
   lightState: "DAY" | "NIGHT" | null;
   rain: boolean | null;
+  rainIntensity: number | null;
   line: "EXTENDED" | "RETRACTED";
   mode: "AUTO" | "MANUAL";
   prediction: "SAFE" | "WARNING" | "CRITICAL";

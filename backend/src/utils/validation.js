@@ -25,6 +25,10 @@ function validateSensorReading(data) {
     warnings.push(`light`);
   }
 
+  if (data.rainIntensity !== undefined && data.rainIntensity !== null && (typeof data.rainIntensity !== "number" || data.rainIntensity < 0 || data.rainIntensity > 100)) {
+    warnings.push(`rainIntensity`);
+  }
+
   return {
     valid: true,
     warnings,
@@ -47,6 +51,9 @@ function sanitizeReading(data) {
       ? parseInt(data.light, 10)
       : null,
     rain: data.rain === true || data.rain === "true",
+    rainIntensity: typeof data.rainIntensity === "number" && data.rainIntensity >= 0
+      ? Math.min(100, Math.round(data.rainIntensity))
+      : null,
     recordedAt: data.timestamp ? new Date(data.timestamp) : new Date(),
   };
 }

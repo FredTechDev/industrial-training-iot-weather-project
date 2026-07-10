@@ -3,10 +3,11 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
+#include <time.h>
 
 // --- WiFi ---
-const char* WIFI_SSID = "your_wifi_ssid";
-const char* WIFI_PASS = "your_wifi_password";
+const char* WIFI_SSID = "DOMA";
+const char* WIFI_PASS = "DOMA2025";
 
 // --- MQTT ---
 const char* MQTT_HOST = "6f83a2bd234445aca1060e89e6171e19.s1.eu.hivemq.cloud";
@@ -83,6 +84,7 @@ void publishEvent(const char* type, const char* message);
 void evaluateAutoMode(bool rain, int rainIntensity, int lightRaw);
 void moveServo(int angle);
 String classifyPrediction(bool rain);
+int getLocalHour();
 
 void setup() {
   Serial.begin(115200);
@@ -98,6 +100,10 @@ void setup() {
   lineServo.write(SERVO_RETRACT);
 
   connectWiFi();
+
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.println("NTP sync started...");
+
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(callback);
 }
@@ -256,9 +262,9 @@ void evaluateAutoMode(bool rain, int rainIntensity, int lightRaw) {
     return;
   }
 
-  // Priority 5: Night time
-  int hour = (millis() / 3600000) % 24;
-  if (hour >= 22 || hour < 6) {
+  // Priority 5: Night time (NTP clock)
+  int hour = getLocalHour();
+  if (hour >= 18 || hour < 6) {
     moveServo(SERVO_RETRACT);
     lineState = "RETRACTED";
     reason = "NIGHT_SECURITY";
@@ -292,6 +298,8 @@ String classifyPrediction(bool rain) {
   bool owmFresh = owmDataReceived && (millis() - lastOwmUpdate < 900000);
   if (owmFresh && pressureTrend == "dropping" && pressureRate < -1.0) return "WARNING";
   if (owmFresh && owmHumidity > humidityHigh) return "WARNING";
+  if (owmFresh && owmTemperature < tempLow) return "WARNING";
+  if (reason == "NIGHT_SECURITY") return "WARNING";
   return "SAFE";
 }
 
@@ -314,9 +322,11 @@ void publishTelemetry(bool rain, int rainIntensity, int lightRaw) {
   doc["mode"]           = currentModeStr;
   doc["prediction"]     = prediction;
   doc["reason"]         = reason;
-  doc["owmTemperature"] = owmDataReceived ? owmTemperature : nullptr;
-  doc["owmHumidity"]    = owmDataReceived ? owmHumidity : nullptr;
-  doc["owmPressure"]    = owmDataReceived ? owmPressure : nullptr;
+  if (owmDataReceived) {
+    doc["owmTemperature"] = owmTemperature;
+    doc["owmHumidity"]    = owmHumidity;
+    doc["owmPressure"]    = owmPressure;
+  }
   doc["pressureTrend"]  = pressureTrend;
   doc["timestamp"]      = "";
 
@@ -388,4 +398,13 @@ void connectMQTT() {
       delay(5000);
     }
   }
+}
+
+int getLocalHour() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("NTP not synced yet, defaulting to safe hour 12");
+    return 12;
+  }
+  return timeinfo.tm_hour;
 }

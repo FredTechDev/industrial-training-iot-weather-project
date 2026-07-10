@@ -101,8 +101,8 @@ void setup() {
 
   connectWiFi();
 
-  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-  Serial.println("NTP sync started...");
+  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.println("NTP sync started (EAT UTC+3)...");
 
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(callback);
@@ -262,9 +262,9 @@ void evaluateAutoMode(bool rain, int rainIntensity, int lightRaw) {
     return;
   }
 
-  // Priority 5: Night time (NTP clock)
+  // Priority 5: Night time (NTP clock, EAT UTC+3)
   int hour = getLocalHour();
-  if (hour >= 18 || hour < 6) {
+  if (hour >= 0 && (hour >= 18 || hour < 6)) {
     moveServo(SERVO_RETRACT);
     lineState = "RETRACTED";
     reason = "NIGHT_SECURITY";
@@ -403,8 +403,10 @@ void connectMQTT() {
 int getLocalHour() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
-    Serial.println("NTP not synced yet, defaulting to safe hour 12");
-    return 12;
+    return -1;
+  }
+  if (timeinfo.tm_year < 100) {
+    return -1;
   }
   return timeinfo.tm_hour;
 }

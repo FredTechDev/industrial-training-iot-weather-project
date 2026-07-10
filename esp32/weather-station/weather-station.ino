@@ -347,8 +347,6 @@ void publishStatus() {
   doc["ip"]          = WiFi.localIP().toString();
   doc["wifiSignal"]  = WiFi.RSSI();
   doc["heapFree"]    = ESP.getFreeHeap();
-  doc["mqttLatency"] = 0;
-  doc["lastHeartbeat"] = "";
 
   char buffer[256];
   size_t n = serializeJson(doc, buffer);

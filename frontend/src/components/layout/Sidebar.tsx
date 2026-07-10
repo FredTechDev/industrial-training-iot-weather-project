@@ -3,12 +3,12 @@ import { useAppStore } from "../../stores/useAppStore";
 import { NAV_ITEMS } from "../../constants";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, Wifi, WifiOff, LayoutDashboard, Activity, BarChart3,
+  X, Wifi, WifiOff, LayoutDashboard, Activity,
   SlidersHorizontal, Clock, HeartPulse, Settings, Info,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard, Activity, BarChart3, SlidersHorizontal,
+  LayoutDashboard, Activity, SlidersHorizontal,
   Clock, HeartPulse, Settings, Info,
 };
 

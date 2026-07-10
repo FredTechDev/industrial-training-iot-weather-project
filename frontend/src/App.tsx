@@ -5,7 +5,6 @@ import AppLayout from "./layouts/AppLayout";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const SensorsPage = lazy(() => import("./pages/SensorsPage"));
-const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ControlCenterPage = lazy(() => import("./pages/ControlCenterPage"));
 const EventsPage = lazy(() => import("./pages/EventsPage"));
 const HealthPage = lazy(() => import("./pages/HealthPage"));
@@ -29,7 +28,6 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/sensors" element={<SensorsPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/control" element={<ControlCenterPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/health" element={<HealthPage />} />

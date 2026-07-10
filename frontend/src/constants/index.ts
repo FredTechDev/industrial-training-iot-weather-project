@@ -48,7 +48,7 @@ export const SENSOR_THRESHOLDS = {
 export const NAV_ITEMS = [
   { path: "/", label: "Dashboard", icon: "LayoutDashboard" },
   { path: "/sensors", label: "Live Sensors", icon: "Activity" },
-  { path: "/analytics", label: "Analytics", icon: "BarChart3" },
+
   { path: "/control", label: "Control Center", icon: "SlidersHorizontal" },
   { path: "/events", label: "Event Timeline", icon: "Clock" },
   { path: "/health", label: "Device Health", icon: "HeartPulse" },

@@ -56,7 +56,6 @@ export default function HealthPage() {
               { label: "Device IP", value: deviceStatus?.ip || "N/A" },
               { label: "Firmware", value: deviceStatus?.firmware || "N/A" },
               { label: "Last Heartbeat", value: deviceStatus?.lastHeartbeat ? new Date(deviceStatus.lastHeartbeat).toLocaleString() : "N/A" },
-              { label: "Connection", value: "MQTT over WSS (TLS)" },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
                 <span className="text-gray-500 text-sm">{item.label}</span>

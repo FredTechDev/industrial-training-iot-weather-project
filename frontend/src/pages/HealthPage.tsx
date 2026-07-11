@@ -30,8 +30,9 @@ function HealthCard({ label, value, icon: Icon, color, delay = 0 }: {
 }
 
 export default function HealthPage() {
-  const { telemetry } = useTelemetry();
+  const { telemetry, isStale } = useTelemetry();
   const { deviceStatus, connection } = useAppStore();
+  const live = telemetry && !isStale;
 
   return (
     <div className="space-y-6">
@@ -69,9 +70,9 @@ export default function HealthPage() {
           <h3 className="text-lg font-semibold mb-4">Sensors</h3>
           <div className="space-y-3">
               {[
-                { label: "YL-83", desc: "Rain Detection (Digital + Analog)", status: telemetry?.rain ? "alert" : "active" },
-                { label: "LDR", desc: "Light Sensor", status: "active" },
-                { label: "Servo SG90", desc: "Clothesline Actuator", status: "active" },
+                { label: "YL-83", desc: "Rain Detection (Digital + Analog)", status: live && telemetry?.rain ? "alert" : live ? "active" : "unknown" },
+                { label: "LDR", desc: "Light Sensor", status: live ? "active" : "unknown" },
+                { label: "Servo SG90", desc: "Clothesline Actuator", status: live ? "active" : "unknown" },
               ].map((sensor) => (
                 <div key={sensor.label} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
                   <div>
@@ -79,9 +80,11 @@ export default function HealthPage() {
                     <p className="text-xs text-gray-500">{sensor.desc}</p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    sensor.status === "alert" ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400"
+                    sensor.status === "alert" ? "bg-amber-500/10 text-amber-400" :
+                    sensor.status === "unknown" ? "bg-gray-500/10 text-gray-400" :
+                    "bg-emerald-500/10 text-emerald-400"
                   }`}>
-                    {sensor.status === "alert" ? "Alert" : "Active"}
+                    {sensor.status === "alert" ? "Alert" : sensor.status === "unknown" ? "No Data" : "Active"}
                   </span>
                 </div>
               ))}

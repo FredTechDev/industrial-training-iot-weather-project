@@ -27,7 +27,8 @@ function SensorCard({ title, icon: Icon, children, delay = 0 }: {
 }
 
 export default function SensorsPage() {
-  const { telemetry, tempLevel, humidityLevel, pressureLevel } = useTelemetry();
+  const { telemetry, isStale, tempLevel, humidityLevel, pressureLevel } = useTelemetry();
+  const live = telemetry && !isStale;
 
   return (
     <div className="space-y-6">
@@ -39,7 +40,7 @@ export default function SensorsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Temperature */}
         <SensorCard title="Temperature" icon={Thermometer} delay={0}>
-          {telemetry?.temperature != null ? (
+          {live && telemetry?.temperature != null ? (
             <>
               <div className="flex justify-center">
                 <Gauge
@@ -64,7 +65,7 @@ export default function SensorsPage() {
 
         {/* Humidity */}
         <SensorCard title="Humidity" icon={Droplets} delay={0.05}>
-          {telemetry?.humidity != null ? (
+          {live && telemetry?.humidity != null ? (
             <>
               <div className="flex justify-center">
                 <Gauge
@@ -89,7 +90,7 @@ export default function SensorsPage() {
 
         {/* Pressure */}
         <SensorCard title="Atmospheric Pressure" icon={Gauge} delay={0.1}>
-          {telemetry?.pressure != null ? (
+          {live && telemetry?.pressure != null ? (
             <>
               <div className="flex justify-center">
                 <Gauge
@@ -114,7 +115,7 @@ export default function SensorsPage() {
 
         {/* Rain */}
         <SensorCard title="Rain Sensor" icon={CloudRain} delay={0.15}>
-          {telemetry != null ? (
+          {live && telemetry != null ? (
             <div className="flex flex-col items-center gap-3 py-4">
               {telemetry.rain ? (
                 <>
@@ -145,7 +146,7 @@ export default function SensorsPage() {
 
         {/* Light */}
         <SensorCard title="Light Level" icon={Sun} delay={0.2}>
-          {telemetry != null ? (
+          {live && telemetry != null ? (
             <div className="flex flex-col items-center gap-3 py-4">
               <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
                 {telemetry.lightState === "NIGHT" ? (

@@ -4,6 +4,7 @@ import type { TelemetryPayload, DeviceStatus, SystemEvent, ConnectionStatus, Dev
 interface AppState {
   connection: ConnectionStatus;
   telemetry: TelemetryPayload | null;
+  lastTelemetryAt: number | null;
   deviceStatus: DeviceStatus | null;
   presence: PresenceMode;
   events: SystemEvent[];
@@ -28,6 +29,7 @@ const MAX_COMMANDS = 50;
 export const useAppStore = create<AppState>((set) => ({
   connection: "disconnected",
   telemetry: null,
+  lastTelemetryAt: null,
   deviceStatus: null,
   presence: "HOME" as PresenceMode,
   events: [],
@@ -42,7 +44,7 @@ export const useAppStore = create<AppState>((set) => ({
   sidebarOpen: true,
 
   setConnection: (connection) => set({ connection }),
-  setTelemetry: (telemetry) => set({ telemetry }),
+  setTelemetry: (telemetry) => set({ telemetry, lastTelemetryAt: Date.now() }),
   setDeviceStatus: (deviceStatus) => set({ deviceStatus }),
   setPresence: (presence) => set({ presence }),
   addEvent: (e) =>

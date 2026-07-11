@@ -9,8 +9,10 @@ import { Signal, Wifi, Radio, Clock, Cpu, Thermometer, Droplets, Gauge, Trending
 import PresenceSelector from "../components/presence/PresenceSelector";
 
 export default function DashboardPage() {
-  const { telemetry, threatColor } = useTelemetry();
+  const { telemetry, isStale, threatColor } = useTelemetry();
   const { deviceStatus, connection } = useAppStore();
+
+  const live = telemetry && !isStale;
 
   return (
     <div className="space-y-6">
@@ -29,9 +31,13 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Clothesline visualization */}
             <div className="flex flex-col items-center gap-4">
-              <ClotheslineAnimation isExtended={telemetry?.line === "EXTENDED"} />
+              <ClotheslineAnimation isExtended={live ? telemetry.line === "EXTENDED" : true} />
               <div className="mt-6">
-                {telemetry?.line ? <StatusBadge status={telemetry.line} pulse /> : <span className="text-xs text-gray-500">Awaiting data...</span>}
+                {live ? (
+                  <StatusBadge status={telemetry.line} pulse />
+                ) : (
+                  <span className="text-xs text-gray-500">Awaiting sensor data...</span>
+                )}
               </div>
             </div>
 
@@ -39,11 +45,11 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Operating Mode</p>
-                {telemetry?.mode ? <StatusBadge status={telemetry.mode} /> : <span className="text-sm text-gray-500">--</span>}
+                {live && telemetry.mode ? <StatusBadge status={telemetry.mode} /> : <span className="text-sm text-gray-500">--</span>}
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Threat Level</p>
-                {telemetry?.prediction ? (
+                {live && telemetry.prediction ? (
                   <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${THREAT_COLORS[telemetry.prediction]}`}>
                     {telemetry.prediction}
                   </div>
@@ -51,9 +57,11 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Reason</p>
-                <p className={`text-sm font-medium ${telemetry?.reason ? REASON_LABELS[telemetry.reason]?.color || "text-gray-400" : "text-gray-500"}`}>
-                  {telemetry?.reason ? (REASON_LABELS[telemetry.reason]?.label || telemetry.reason) : "Awaiting data..."}
-                </p>
+                {live && telemetry.reason ? (
+                  <p className={`text-sm font-medium ${REASON_LABELS[telemetry.reason]?.color || "text-gray-400"}`}>
+                    {REASON_LABELS[telemetry.reason]?.label || telemetry.reason}
+                  </p>
+                ) : <span className="text-sm text-gray-500">Awaiting data...</span>}
               </div>
             </div>
 
@@ -76,7 +84,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">WiFi</p>
-                  <p className="text-sm font-medium text-white">{deviceStatus?.wifiSignal ?? "--"} dBm</p>
+                  <p className="text-sm font-medium text-white">{live && deviceStatus?.wifiSignal != null ? `${deviceStatus.wifiSignal} dBm` : "--"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
@@ -85,7 +93,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Uptime</p>
-                  <p className="text-sm font-medium text-white">{deviceStatus?.uptime != null ? formatDuration(deviceStatus.uptime) : "--"}</p>
+                  <p className="text-sm font-medium text-white">{live && deviceStatus?.uptime != null ? formatDuration(deviceStatus.uptime) : "--"}</p>
                 </div>
               </div>
             </div>
@@ -108,7 +116,7 @@ export default function DashboardPage() {
                   Last Update
                 </div>
                 <span className="text-xs text-white font-mono">
-                  {telemetry?.timestamp ? new Date(telemetry.timestamp).toLocaleTimeString() : "--:--:--"}
+                  {live && telemetry?.timestamp ? new Date(telemetry.timestamp).toLocaleTimeString() : "--:--:--"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -116,7 +124,7 @@ export default function DashboardPage() {
                   <Wifi size={12} />
                   Firmware
                 </div>
-                <span className="text-xs text-white font-mono">{deviceStatus?.firmware || "--"}</span>
+                <span className="text-xs text-white font-mono">{live && deviceStatus?.firmware ? deviceStatus.firmware : "--"}</span>
               </div>
             </div>
           </motion.div>
@@ -132,7 +140,7 @@ export default function DashboardPage() {
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-300">Weather Conditions (OpenWeatherMap)</h3>
-          {telemetry?.pressureTrend && (
+          {live && telemetry?.pressureTrend && telemetry.pressureTrend !== "stable" && (
             <div className={`flex items-center gap-1 text-xs font-medium ${
               telemetry.pressureTrend === "dropping" ? "text-red-400" :
               telemetry.pressureTrend === "rising" ? "text-emerald-400" : "text-gray-400"
@@ -150,7 +158,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Temperature</p>
-              <p className="text-sm font-medium text-white">{telemetry?.temperature ?? "--"}°C</p>
+              <p className="text-sm font-medium text-white">{live && telemetry?.temperature != null ? `${telemetry.temperature}°C` : "--"}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
@@ -159,7 +167,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Humidity</p>
-              <p className="text-sm font-medium text-white">{telemetry?.humidity ?? "--"}%</p>
+              <p className="text-sm font-medium text-white">{live && telemetry?.humidity != null ? `${telemetry.humidity}%` : "--"}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
@@ -168,7 +176,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Pressure</p>
-              <p className="text-sm font-medium text-white">{telemetry?.pressure ?? "--"} hPa</p>
+              <p className="text-sm font-medium text-white">{live && telemetry?.pressure != null ? `${telemetry.pressure} hPa` : "--"}</p>
             </div>
           </div>
         </div>

@@ -2,8 +2,16 @@ import { useMemo } from "react";
 import { useAppStore } from "../stores/useAppStore";
 import { SENSOR_THRESHOLDS } from "../constants";
 
+const STALE_THRESHOLD_MS = 30_000;
+
 export function useTelemetry() {
   const telemetry = useAppStore((s) => s.telemetry);
+  const lastTelemetryAt = useAppStore((s) => s.lastTelemetryAt);
+
+  const isStale = useMemo(() => {
+    if (!lastTelemetryAt) return true;
+    return Date.now() - lastTelemetryAt > STALE_THRESHOLD_MS;
+  }, [lastTelemetryAt]);
 
   const tempLevel = useMemo(() => {
     if (!telemetry || telemetry.temperature == null) return "normal";
@@ -35,5 +43,5 @@ export function useTelemetry() {
     }
   }, [telemetry]);
 
-  return { telemetry, tempLevel, humidityLevel, pressureLevel, threatColor };
+  return { telemetry, isStale, tempLevel, humidityLevel, pressureLevel, threatColor };
 }

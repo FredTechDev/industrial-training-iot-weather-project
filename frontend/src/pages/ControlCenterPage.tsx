@@ -2,10 +2,13 @@ import { motion } from "framer-motion";
 import ControlPanel from "../components/control/ControlPanel";
 import StatusBadge from "../components/common/StatusBadge";
 import { useAppStore } from "../stores/useAppStore";
+import { useTelemetry } from "../hooks/useTelemetry";
 import { SlidersHorizontal } from "lucide-react";
 
 export default function ControlCenterPage() {
   const { telemetry } = useAppStore();
+  const { isStale } = useTelemetry();
+  const live = telemetry && !isStale;
 
   return (
     <div className="space-y-6">
@@ -26,7 +29,7 @@ export default function ControlCenterPage() {
 
         <div className="mb-6 p-4 bg-gray-800/50 rounded-xl">
           <p className="text-xs text-gray-500 mb-2">Current Device State</p>
-          {telemetry ? (
+          {live ? (
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={telemetry.line} pulse />
               <StatusBadge status={telemetry.mode} />

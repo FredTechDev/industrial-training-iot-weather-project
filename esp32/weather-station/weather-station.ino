@@ -36,8 +36,8 @@ const char* TOPIC_PRESENCE  = "home/presence";
 
 // --- Servo ---
 Servo lineServo;
-const int SERVO_EXTEND  = 90;
-const int SERVO_RETRACT = 0;
+const int SERVO_EXTEND  = 0;
+const int SERVO_RETRACT = 90;
 
 // --- State ---
 enum AutomationMode { MODE_AUTO, MODE_FORCE_RETRACT, MODE_FORCE_EXTEND, MODE_STOPPED };

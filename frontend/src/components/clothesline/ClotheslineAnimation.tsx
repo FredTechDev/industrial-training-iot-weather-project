@@ -126,7 +126,7 @@ export default function ClotheslineAnimation({ isExtended }: ClotheslineAnimatio
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {isExtended ? "EXTENDED 90°" : "RETRACTED 0°"}
+          {isExtended ? "EXTENDED 0°" : "RETRACTED 90°"}
         </motion.span>
       </div>
     </div>

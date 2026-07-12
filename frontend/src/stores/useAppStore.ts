@@ -5,6 +5,7 @@ interface AppState {
   connection: ConnectionStatus;
   telemetry: TelemetryPayload | null;
   lastTelemetryAt: number | null;
+  mqttConnectedAt: number | null;
   deviceStatus: DeviceStatus | null;
   presence: PresenceMode;
   events: SystemEvent[];
@@ -30,6 +31,7 @@ export const useAppStore = create<AppState>((set) => ({
   connection: "disconnected",
   telemetry: null,
   lastTelemetryAt: null,
+  mqttConnectedAt: null,
   deviceStatus: null,
   presence: "HOME" as PresenceMode,
   events: [],
@@ -43,7 +45,10 @@ export const useAppStore = create<AppState>((set) => ({
   commandHistory: [],
   sidebarOpen: true,
 
-  setConnection: (connection) => set({ connection }),
+  setConnection: (connection) => set((s) => ({
+    connection,
+    mqttConnectedAt: connection === "connected" ? Date.now() : s.mqttConnectedAt,
+  })),
   setTelemetry: (telemetry) => set({ telemetry, lastTelemetryAt: Date.now() }),
   setDeviceStatus: (deviceStatus) => set({ deviceStatus }),
   setPresence: (presence) => set({ presence }),

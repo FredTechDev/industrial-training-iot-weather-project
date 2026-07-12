@@ -3,15 +3,19 @@ import { useAppStore } from "../stores/useAppStore";
 import { SENSOR_THRESHOLDS } from "../constants";
 
 const STALE_THRESHOLD_MS = 30_000;
+const RETAINED_WINDOW_MS = 3_000;
 
 export function useTelemetry() {
   const telemetry = useAppStore((s) => s.telemetry);
   const lastTelemetryAt = useAppStore((s) => s.lastTelemetryAt);
+  const mqttConnectedAt = useAppStore((s) => s.mqttConnectedAt);
 
   const isStale = useMemo(() => {
     if (!lastTelemetryAt) return true;
-    return Date.now() - lastTelemetryAt > STALE_THRESHOLD_MS;
-  }, [lastTelemetryAt]);
+    if (Date.now() - lastTelemetryAt > STALE_THRESHOLD_MS) return true;
+    if (mqttConnectedAt && lastTelemetryAt - mqttConnectedAt < RETAINED_WINDOW_MS) return true;
+    return false;
+  }, [lastTelemetryAt, mqttConnectedAt]);
 
   const tempLevel = useMemo(() => {
     if (!telemetry || telemetry.temperature == null) return "normal";

@@ -151,7 +151,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (strcmp(message, "AUTO") == 0) {
       currentMode = MODE_AUTO;
       currentModeStr = "AUTO";
-      reason = "SAFE";
       publishEvent("success", "Automation resumed");
       Serial.println("Mode: AUTO");
     } else if (strcmp(message, "FORCE_RETRACT") == 0) {

@@ -22,7 +22,8 @@ export default function ControlPanel({ compact = false }: { compact?: boolean })
   const commandHistory = useAppStore((s) => s.commandHistory);
 
   const handleEmergency = () => {
-    send(MQTT_COMMANDS.FORCE_RETRACT, "Emergency Retract", true);
+    send(MQTT_COMMANDS.STOP_AUTOMATION, "Stop Auto", false);
+    setTimeout(() => send(MQTT_COMMANDS.FORCE_RETRACT, "Emergency Retract", false), 200);
   };
 
   return (
@@ -62,7 +63,7 @@ export default function ControlPanel({ compact = false }: { compact?: boolean })
               <div key={i} className="flex items-center justify-between text-xs py-1">
                 <span className="font-mono text-gray-300">{c.command}</span>
                 <span className={c.ack ? "text-emerald-400" : "text-red-400"}>
-                  {c.ack ? "sent" : "failed"}
+                  {c.ack ? "queued" : "offline"}
                 </span>
               </div>
             ))}

@@ -1,5 +1,7 @@
 export function formatTime(ts: string | Date): string {
+  if (!ts) return "--:--:--";
   const d = typeof ts === "string" ? new Date(ts) : ts;
+  if (isNaN(d.getTime())) return "--:--:--";
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 

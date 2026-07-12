@@ -1,16 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { mqttService } from "../services/mqtt";
 import { useAppStore } from "../stores/useAppStore";
 import type { TelemetryPayload, PresencePayload, DeviceStatus, SystemEvent, ConnectionStatus } from "../types";
 
+const RETAINED_WINDOW_MS = 3_000;
+
 export function useMqtt() {
   const { setConnection, setTelemetry, setDeviceStatus, setPresence, addEvent } = useAppStore();
+  const connectedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     mqttService.connect();
 
     const unsubs = [
-      mqttService.on("connection", (s: ConnectionStatus) => setConnection(s)),
+      mqttService.on("connection", (s: ConnectionStatus) => {
+        if (s === "connected") connectedAtRef.current = Date.now();
+        setConnection(s);
+      }),
       mqttService.on("telemetry", (t: TelemetryPayload) => {
         setTelemetry(t);
         addEvent({
@@ -21,7 +27,13 @@ export function useMqtt() {
         });
       }),
       mqttService.on("status", (s: DeviceStatus) => setDeviceStatus(s)),
-      mqttService.on("events", (e: SystemEvent) => addEvent(e)),
+      mqttService.on("events", (e: SystemEvent) => {
+        if (connectedAtRef.current && Date.now() - connectedAtRef.current < RETAINED_WINDOW_MS) return;
+        addEvent({
+          ...e,
+          timestamp: e.timestamp || new Date().toISOString(),
+        });
+      }),
       mqttService.on("presence", (p: PresencePayload) => {
         setPresence(p.mode);
         addEvent({

@@ -5,14 +5,22 @@ import ClotheslineAnimation from "../components/clothesline/ClotheslineAnimation
 import StatusBadge from "../components/common/StatusBadge";
 import { REASON_LABELS, THREAT_COLORS } from "../constants";
 import { formatDuration } from "../utils/format";
-import { Signal, Wifi, Radio, Clock, Cpu, Thermometer, Droplets, Gauge, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { Signal, Radio, Cpu, Thermometer, Droplets, Gauge, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import PresenceSelector from "../components/presence/PresenceSelector";
+
+function wifiSignalLabel(dbm: number): { label: string; color: string } {
+  if (dbm >= -50) return { label: "Excellent", color: "text-emerald-400" };
+  if (dbm >= -65) return { label: "Strong", color: "text-emerald-400" };
+  if (dbm >= -75) return { label: "Fair", color: "text-amber-400" };
+  return { label: "Weak", color: "text-red-400" };
+}
 
 export default function DashboardPage() {
   const { telemetry, isStale, threatColor } = useTelemetry();
   const { deviceStatus, connection } = useAppStore();
 
   const live = telemetry && !isStale;
+  const wifiInfo = live && deviceStatus?.wifiSignal != null ? wifiSignalLabel(deviceStatus.wifiSignal) : null;
 
   return (
     <div className="space-y-6">
@@ -84,7 +92,9 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">WiFi</p>
-                  <p className="text-sm font-medium text-white">{live && deviceStatus?.wifiSignal != null ? `${deviceStatus.wifiSignal} dBm` : "--"}</p>
+                  <p className={`text-sm font-medium ${wifiInfo ? wifiInfo.color : "text-gray-500"}`}>
+                    {wifiInfo ? wifiInfo.label : "--"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
@@ -105,28 +115,6 @@ export default function DashboardPage() {
           {/* Presence Mode */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <PresenceSelector />
-          </motion.div>
-
-          {/* Timestamps */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-gray-400 text-xs">
-                  <Clock size={12} />
-                  Last Update
-                </div>
-                <span className="text-xs text-white font-mono">
-                  {live && telemetry?.timestamp ? new Date(telemetry.timestamp).toLocaleTimeString() : "--:--:--"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-gray-400 text-xs">
-                  <Wifi size={12} />
-                  Firmware
-                </div>
-                <span className="text-xs text-white font-mono">{live && deviceStatus?.firmware ? deviceStatus.firmware : "--"}</span>
-              </div>
-            </div>
           </motion.div>
         </div>
       </div>

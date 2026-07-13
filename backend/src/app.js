@@ -40,7 +40,9 @@ const frontendDist = path.join(__dirname, "../../frontend/dist");
 app.use(express.static(frontendDist));
 app.get("*", (req, res) => {
   if (req.path.startsWith("/api")) return notFound(req, res);
-  res.sendFile(path.join(frontendDist, "index.html"));
+  res.sendFile(path.join(frontendDist, "index.html"), (err) => {
+    if (err) res.status(404).send("Frontend not built");
+  });
 });
 
 app.use(errorHandler);

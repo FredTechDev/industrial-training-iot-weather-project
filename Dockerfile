@@ -30,7 +30,7 @@ RUN npx prisma generate
 
 COPY backend/ .
 
-COPY --from=frontend-build /frontend/dist /app/frontend/dist
+COPY --from=frontend-build /frontend/dist /frontend/dist
 
 RUN chmod +x entrypoint.sh
 

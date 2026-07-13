@@ -22,7 +22,6 @@ export interface DeviceStatus {
   uptime: number;
   firmware: string;
   ip: string;
-  wifiSignal: number;
   heapFree: number;
   mqttLatency: number;
   lastHeartbeat: string;

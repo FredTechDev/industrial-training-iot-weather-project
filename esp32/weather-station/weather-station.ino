@@ -344,7 +344,6 @@ void publishStatus() {
   doc["uptime"]      = (millis() - startTime) / 1000;
   doc["firmware"]    = "3.0.0";
   doc["ip"]          = WiFi.localIP().toString();
-  doc["wifiSignal"]  = WiFi.RSSI();
   doc["heapFree"]    = ESP.getFreeHeap();
 
   char buffer[256];

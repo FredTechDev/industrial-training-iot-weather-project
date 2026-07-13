@@ -5,22 +5,14 @@ import ClotheslineAnimation from "../components/clothesline/ClotheslineAnimation
 import StatusBadge from "../components/common/StatusBadge";
 import { REASON_LABELS, THREAT_COLORS } from "../constants";
 import { formatDuration } from "../utils/format";
-import { Signal, Radio, Cpu, Thermometer, Droplets, Gauge, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { Radio, Cpu, Thermometer, Droplets, Gauge, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import PresenceSelector from "../components/presence/PresenceSelector";
 
-function wifiSignalLabel(dbm: number): { label: string; color: string } {
-  if (dbm >= -50) return { label: "Excellent", color: "text-emerald-400" };
-  if (dbm >= -65) return { label: "Strong", color: "text-emerald-400" };
-  if (dbm >= -75) return { label: "Fair", color: "text-amber-400" };
-  return { label: "Weak", color: "text-red-400" };
-}
-
 export default function DashboardPage() {
-  const { telemetry, isStale, threatColor } = useTelemetry();
+  const { telemetry, isStale } = useTelemetry();
   const { deviceStatus, connection } = useAppStore();
 
   const live = telemetry && !isStale;
-  const wifiInfo = live && deviceStatus?.wifiSignal != null ? wifiSignalLabel(deviceStatus.wifiSignal) : null;
 
   return (
     <div className="space-y-6">
@@ -83,17 +75,6 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-500">MQTT</p>
                   <p className={`text-sm font-medium ${connection === "connected" ? "text-emerald-400" : "text-red-400"}`}>
                     {connection === "connected" ? "Connected" : "Offline"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Signal size={14} className="text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">WiFi</p>
-                  <p className={`text-sm font-medium ${wifiInfo ? wifiInfo.color : "text-gray-500"}`}>
-                    {wifiInfo ? wifiInfo.label : "--"}
                   </p>
                 </div>
               </div>

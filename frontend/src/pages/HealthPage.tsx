@@ -3,7 +3,7 @@ import { useAppStore } from "../stores/useAppStore";
 import { useTelemetry } from "../hooks/useTelemetry";
 import { formatDuration } from "../utils/format";
 import {
-  Wifi, Radio, Cpu, HardDrive, Clock, Globe, Server, Activity, ThermometerSun,
+  Radio, Cpu, HardDrive, Clock, Globe, Server, Activity, ThermometerSun,
 } from "lucide-react";
 
 function HealthCard({ label, value, icon: Icon, color, delay = 0 }: {
@@ -41,9 +41,8 @@ export default function HealthPage() {
         <p className="text-gray-400 text-sm">ESP32 system diagnostics and connectivity metrics</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <HealthCard label="WiFi Signal" value={`${deviceStatus?.wifiSignal ?? "--"} dBm`} icon={Wifi} color="bg-blue-500/10 text-blue-400" delay={0} />
-        <HealthCard label="MQTT Latency" value={`${deviceStatus?.mqttLatency ?? "--"} ms`} icon={Radio} color="bg-emerald-500/10 text-emerald-400" delay={0.05} />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <HealthCard label="MQTT Latency" value={`${deviceStatus?.mqttLatency ?? "--"} ms`} icon={Radio} color="bg-emerald-500/10 text-emerald-400" delay={0} />
         <HealthCard label="Heap Free" value={deviceStatus?.heapFree != null ? `${(deviceStatus.heapFree / 1024).toFixed(1)} KB` : "--"} icon={HardDrive} color="bg-purple-500/10 text-purple-400" delay={0.1} />
         <HealthCard label="Uptime" value={deviceStatus?.uptime != null ? formatDuration(deviceStatus.uptime) : "--"} icon={Clock} color="bg-amber-500/10 text-amber-400" delay={0.15} />
       </div>
